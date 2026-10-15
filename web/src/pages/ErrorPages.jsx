@@ -22,3 +22,7 @@ export function RouteErrorPage() {
   if (isRouteErrorResponse(error) && error.status === 404) return <NotFoundPage />
   return <ErrorLayout title="Something went wrong" message="Please refresh the page or try again in a moment." />
 }
+
+export function ForbiddenPage() {
+  return <ErrorLayout title="Access denied" message="Your account doesn't have permission to view this page." />
+}

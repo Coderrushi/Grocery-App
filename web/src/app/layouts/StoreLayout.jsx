@@ -1,5 +1,6 @@
 import { Link, Outlet } from 'react-router'
 import { config } from '../config'
+import { AccountNav } from '../../features/auth/AccountNav'
 
 const currentYear = new Date().getFullYear()
 
@@ -21,7 +22,8 @@ export function StoreLayout() {
             </span>
             {config.storeName}
           </Link>
-          {/* Search, account and cart arrive in Phases 2–4. */}
+          {/* Search and cart arrive in Phases 3–4. */}
+          <AccountNav />
         </div>
       </header>
 

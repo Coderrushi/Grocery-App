@@ -1,6 +1,8 @@
+using FluentValidation;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using MySql.Data.MySqlClient;
 
 namespace GroceryStore.Api.Common.Errors;
 
@@ -13,6 +15,8 @@ internal sealed partial class GlobalExceptionHandler(
     IProblemDetailsService problemDetailsService,
     ILogger<GlobalExceptionHandler> logger) : IExceptionHandler
 {
+    private const int MySqlDuplicateKeyError = 1062;
+
     public async ValueTask<bool> TryHandleAsync(HttpContext httpContext, Exception exception, CancellationToken cancellationToken)
     {
         var problem = exception switch
@@ -23,11 +27,26 @@ internal sealed partial class GlobalExceptionHandler(
                 Title = appException.Title,
                 Detail = appException.Message,
             },
+            ValidationException validation => new HttpValidationProblemDetails(
+                validation.Errors
+                    .GroupBy(e => e.PropertyName)
+                    .ToDictionary(g => g.Key, g => g.Select(e => e.ErrorMessage).ToArray()))
+            {
+                Status = StatusCodes.Status400BadRequest,
+                Title = "One or more validation errors occurred.",
+            },
             DbUpdateConcurrencyException => new ProblemDetails
             {
                 Status = StatusCodes.Status409Conflict,
                 Title = "Conflict",
                 Detail = "The record was changed by someone else. Reload it and try again.",
+            },
+            // Unique index violated by a concurrent request that passed the service's own duplicate check.
+            DbUpdateException { InnerException: MySqlException { Number: MySqlDuplicateKeyError } } => new ProblemDetails
+            {
+                Status = StatusCodes.Status409Conflict,
+                Title = "Conflict",
+                Detail = "This record already exists.",
             },
             BadHttpRequestException badRequest => new ProblemDetails
             {

@@ -25,6 +25,13 @@ public sealed class ConflictException(string message) : AppException(message)
     public override string Title => "Conflict";
 }
 
+/// <summary>Sign-in failed (wrong credentials or locked out). The message is safe to show to the user.</summary>
+public sealed class AuthenticationFailedException(string message) : AppException(message)
+{
+    public override int StatusCode => StatusCodes.Status401Unauthorized;
+    public override string Title => "Sign-in failed";
+}
+
 /// <summary>The request is well-formed but violates a business rule, e.g. insufficient stock or wallet balance.</summary>
 public sealed class BusinessRuleException(string message) : AppException(message)
 {

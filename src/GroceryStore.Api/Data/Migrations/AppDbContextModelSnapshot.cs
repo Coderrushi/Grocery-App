@@ -19,6 +19,77 @@ namespace GroceryStore.Api.Data.Migrations
                 .HasAnnotation("ProductVersion", "10.0.9")
                 .HasAnnotation("Relational:MaxIdentifierLength", 64);
 
+            modelBuilder.Entity("GroceryStore.Api.Modules.Customers.Address", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<string>("City")
+                        .IsRequired()
+                        .HasMaxLength(60)
+                        .HasColumnType("varchar(60)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasPrecision(6)
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<bool>("IsDefault")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("Label")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("varchar(10)");
+
+                    b.Property<string>("Landmark")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<string>("Line1")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)");
+
+                    b.Property<string>("Line2")
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)");
+
+                    b.Property<string>("PhoneNumber")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("varchar(10)");
+
+                    b.Property<string>("Pincode")
+                        .IsRequired()
+                        .HasMaxLength(6)
+                        .HasColumnType("char(6)")
+                        .IsFixedLength();
+
+                    b.Property<string>("RecipientName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<string>("State")
+                        .IsRequired()
+                        .HasMaxLength(60)
+                        .HasColumnType("varchar(60)");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasPrecision(6)
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("addresses", (string)null);
+                });
+
             modelBuilder.Entity("GroceryStore.Api.Modules.Identity.AppRole", b =>
                 {
                     b.Property<int>("Id")
@@ -109,7 +180,8 @@ namespace GroceryStore.Api.Data.Migrations
                         .HasColumnType("longtext");
 
                     b.Property<string>("PhoneNumber")
-                        .HasColumnType("longtext");
+                        .HasMaxLength(10)
+                        .HasColumnType("varchar(10)");
 
                     b.Property<bool>("PhoneNumberConfirmed")
                         .HasColumnType("tinyint(1)");
@@ -132,6 +204,9 @@ namespace GroceryStore.Api.Data.Migrations
                     b.HasIndex("NormalizedUserName")
                         .IsUnique()
                         .HasDatabaseName("UserNameIndex");
+
+                    b.HasIndex("PhoneNumber")
+                        .IsUnique();
 
                     b.ToTable("users", (string)null);
                 });
@@ -233,6 +308,15 @@ namespace GroceryStore.Api.Data.Migrations
                     b.HasKey("UserId", "LoginProvider", "Name");
 
                     b.ToTable("user_tokens", (string)null);
+                });
+
+            modelBuilder.Entity("GroceryStore.Api.Modules.Customers.Address", b =>
+                {
+                    b.HasOne("GroceryStore.Api.Modules.Identity.AppUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<int>", b =>

@@ -50,7 +50,9 @@ Prerequisites: .NET SDK 10.0.2xx, Node 24, MySQL 8.x.
    dotnet tool restore
    dotnet ef database update --project src/GroceryStore.Api
    ```
-5. **Run the API** (http://localhost:5230, Swagger UI at `/swagger`):
+5. **Run the API** (http://localhost:5230, Swagger UI at `/swagger`). In Development, an empty
+   catalog is filled with about 40 demo groceries (`SeedDemoCatalog` in `appsettings.Development.json`).
+   Uploaded product images are saved in `src/GroceryStore.Api/media/`, which git ignores.
    ```powershell
    dotnet run --project src/GroceryStore.Api
    ```
@@ -76,7 +78,15 @@ Prerequisites: .NET SDK 10.0.2xx, Node 24, MySQL 8.x.
 - **Errors:** every API error is RFC 7807 ProblemDetails with a `traceId`. Services throw
   `NotFoundException`, `ConflictException` or `BusinessRuleException`, and never return error codes.
 - **Validation:** FluentValidation validators next to their request DTOs run automatically.
-- **Money:** `decimal(10,2)` in INR. Format in the UI only via `formatCurrency`.
+- **Money:** `decimal(10,2)` in INR, inclusive of taxes. Every product has a selling `Price` and the
+  printed `Mrp` (`Mrp >= Price`, enforced by a DB CHECK constraint). Format in the UI only via
+  `formatCurrency`.
+- **Stock:** change it only through `InventoryService` (an atomic conditional UPDATE plus an
+  `inventory_adjustments` ledger row). Never set `StockQuantity` directly. Products are deactivated,
+  never deleted.
+- **Admin edits** carry the product `Version`; a stale version returns 409 instead of overwriting.
+- **Media:** go through `IMediaStorage`. Validate uploads by content (`ImageFile.DetectExtension`),
+  never by file name.
 - **Time:** store UTC `DateTime` (never `DateTimeOffset`), and display in IST via `formatDateTime`.
 - **Transactions:** wrap explicit transactions in `CreateExecutionStrategy().ExecuteAsync(...)`.
 - **Tables:** lower snake_case and plural. Each entity configuration calls `ToTable("order_items")`

@@ -485,3 +485,6 @@ $RECYCLE.BIN/
 .env
 .env.*
 !.env.example
+
+# Uploaded media (product images) — runtime data, not source
+src/GroceryStore.Api/media/

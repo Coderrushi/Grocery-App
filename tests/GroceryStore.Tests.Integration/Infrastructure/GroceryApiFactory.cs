@@ -32,6 +32,19 @@ public sealed class GroceryApiFactory : WebApplicationFactory<Program>, IAsyncLi
         builder.UseSetting("AdminSeed:FullName", "Test Admin");
         // Every test client shares one "IP"; the rate limit itself is tested with a dedicated host.
         builder.UseSetting("RateLimiting:AuthPermitLimitPerMinute", "100000");
+        builder.UseSetting("Media:RootPath", MediaRoot);
+    }
+
+    /// <summary>Uploaded files go to a throwaway folder, never the developer's real media directory.</summary>
+    public string MediaRoot { get; } = Path.Combine(Path.GetTempPath(), "quickkirana-test-media", Guid.NewGuid().ToString("N"));
+
+    public override async ValueTask DisposeAsync()
+    {
+        await base.DisposeAsync();
+        if (Directory.Exists(MediaRoot))
+        {
+            Directory.Delete(MediaRoot, recursive: true);
+        }
     }
 
     public async ValueTask InitializeAsync()

@@ -73,6 +73,26 @@ export function SelectField({ label, error, hint, id, className = '', children, 
   )
 }
 
+export function TextAreaField({ label, error, hint, id, className = '', rows = 4, ...textareaProps }) {
+  const { inputId, hintId, errorId } = useFieldIds(id)
+  return (
+    <div className={className}>
+      <label htmlFor={inputId} className="mb-1 block text-sm font-medium">
+        {label}
+      </label>
+      <textarea
+        id={inputId}
+        rows={rows}
+        aria-invalid={error ? 'true' : undefined}
+        aria-describedby={describedBy(hint, error, hintId, errorId)}
+        className={`${controlClass} ${borderClass(error)} py-2`}
+        {...textareaProps}
+      />
+      <FieldMessages hint={hint} error={error} hintId={hintId} errorId={errorId} />
+    </div>
+  )
+}
+
 export function CheckboxField({ label, id, className = '', ...inputProps }) {
   const autoId = useId()
   const inputId = id ?? autoId

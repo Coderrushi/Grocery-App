@@ -26,7 +26,7 @@ export function AccountNav() {
   return (
     <nav aria-label="Account" className="flex items-center gap-1 text-sm sm:gap-2">
       {isAdmin(user) && (
-        <Link to="/admin/customers" className="text-ink-muted hover:text-ink rounded-lg px-2 py-2 font-semibold">
+        <Link to="/admin" className="text-ink-muted hover:text-ink rounded-lg px-2 py-2 font-semibold">
           Admin
         </Link>
       )}

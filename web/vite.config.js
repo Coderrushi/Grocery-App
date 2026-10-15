@@ -13,6 +13,7 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': { target: apiTarget, changeOrigin: false },
+      '/media': { target: apiTarget, changeOrigin: false }, // uploaded product images
     },
   },
   test: {

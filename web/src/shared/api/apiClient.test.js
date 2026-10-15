@@ -28,6 +28,19 @@ describe('apiClient', () => {
     const [, init] = fetch.mock.calls[0]
     expect(init.body).toBe('{"name":"Rice"}')
     expect(init.headers['Content-Type']).toBe('application/json')
+    expect(init.headers['X-Requested-With']).toBe('XMLHttpRequest')
+  })
+
+  it('sends FormData untouched so the browser sets the multipart boundary', async () => {
+    mockFetch(200, { imageUrl: '/media/products/a.png' })
+    const form = new FormData()
+    form.append('file', new Blob(['x']), 'a.png')
+
+    await apiClient.post('/admin/products/1/image', form)
+
+    const [, init] = fetch.mock.calls[0]
+    expect(init.body).toBe(form)
+    expect(init.headers['Content-Type']).toBeUndefined()
   })
 
   it('turns ProblemDetails responses into ApiError', async () => {

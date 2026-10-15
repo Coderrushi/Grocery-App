@@ -25,18 +25,22 @@ export class ApiError extends Error {
 }
 
 async function request(path, { method = 'GET', body, signal, headers } = {}) {
+  // FormData (file uploads) is sent as-is so the browser sets the multipart boundary; anything else is JSON.
+  const isForm = body instanceof FormData
   let response
   try {
     response = await fetch(`${BASE_URL}${path}`, {
       method,
       signal,
-      credentials: 'same-origin', // sends the auth cookie (Phase 2)
+      credentials: 'same-origin', // sends the auth cookie
       headers: {
         Accept: 'application/json',
-        ...(body !== undefined && { 'Content-Type': 'application/json' }),
+        // Proves the request came from our own scripts; required by upload endpoints (CSRF defence).
+        'X-Requested-With': 'XMLHttpRequest',
+        ...(body !== undefined && !isForm && { 'Content-Type': 'application/json' }),
         ...headers,
       },
-      body: body !== undefined ? JSON.stringify(body) : undefined,
+      body: body === undefined || isForm ? body : JSON.stringify(body),
     })
   } catch (error) {
     if (error.name === 'AbortError') throw error

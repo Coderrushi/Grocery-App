@@ -2,8 +2,10 @@ using System.Diagnostics;
 using System.Text.Json.Serialization;
 using GroceryStore.Api.Common;
 using GroceryStore.Api.Common.Errors;
+using GroceryStore.Api.Common.Media;
 using GroceryStore.Api.Common.Validation;
 using GroceryStore.Api.Data;
+using GroceryStore.Api.Modules.Catalog;
 using GroceryStore.Api.Modules.Customers;
 using GroceryStore.Api.Modules.Identity;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
@@ -44,6 +46,8 @@ builder.Services.AddHealthChecks()
 // Modules
 builder.Services.AddAppIdentity(builder.Configuration, builder.Environment);
 builder.Services.AddCustomers();
+builder.Services.AddCatalog();
+builder.Services.AddMedia(builder.Configuration, builder.Environment);
 
 // ---------- HTTP pipeline ----------
 
@@ -63,6 +67,8 @@ else
     app.UseHttpsRedirection();
 }
 
+app.UseMedia(); // uploaded product images under /media (public, before auth)
+
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseRateLimiter();
@@ -71,6 +77,7 @@ app.MapControllers();
 app.MapHealthChecks("/api/health", new HealthCheckOptions { ResponseWriter = HealthResponseWriter.WriteAsync });
 
 await app.SeedAdminAsync();
+await app.SeedDemoCatalogAsync();
 await app.RunAsync();
 
 // Exposes the implicit Program class to WebApplicationFactory in the integration tests.

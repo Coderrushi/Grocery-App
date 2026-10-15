@@ -20,6 +20,10 @@ number. The shopkeeper needs an admin role. Native mobile apps may come later.
 - **CSRF** protection comes from `SameSite=Strict` plus JSON-only request bodies. A cross-site page
   cannot attach the cookie, and an HTML form cannot send `application/json`, so the API answers 415.
   No anti-forgery tokens are needed.
+  - Endpoints that must accept `multipart/form-data` (image uploads) carry `[RequireXhrHeader]`. An
+    HTML form can post multipart data, but it cannot add the `X-Requested-With` header, and a
+    cross-site script that adds it triggers a CORS preflight the API never approves. The web app's
+    `apiClient` sends the header on every request.
 - **Passwords:** at least 8 characters and at least 4 distinct characters, with no composition rules
   (NIST SP 800-63B). Lockout after 5 failures for 15 minutes.
 - **Rate limiting:** 10 requests per minute per IP on register and login.

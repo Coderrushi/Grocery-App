@@ -1,0 +1,7 @@
+@api = http://localhost:5230
+
+### Health (API + database)
+GET {{api}}/api/health
+
+### OpenAPI document (Development only). Swagger UI: http://localhost:5230/swagger
+GET {{api}}/openapi/v1.json

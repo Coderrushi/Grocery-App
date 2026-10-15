@@ -1,0 +1,53 @@
+@import 'tailwindcss';
+
+/*
+  Design tokens. Every colour, radius and shadow used by components comes from here, so the
+  storefront can be re-branded by editing this block alone. Tailwind v4 turns each token into
+  utilities automatically, e.g. --color-brand-600 -> bg-brand-600, text-brand-600.
+*/
+@theme {
+  /* Brand: fresh green (produce, trust). */
+  --color-brand-50: #f0fdf4;
+  --color-brand-100: #dcfce7;
+  --color-brand-200: #bbf7d0;
+  --color-brand-500: #22a15a;
+  --color-brand-600: #16843f;
+  --color-brand-700: #126b34;
+  --color-brand-900: #0b3d1f;
+
+  /* Accent: warm saffron for offers, badges and the cart count. */
+  --color-accent-100: #ffedd5;
+  --color-accent-500: #f28c18;
+  --color-accent-600: #d9730a;
+
+  /* Semantic colours. */
+  --color-danger-50: #fef2f2;
+  --color-danger-600: #dc2626;
+  --color-danger-700: #b91c1c;
+  --color-success-600: #16a34a;
+  --color-surface: #ffffff;
+  --color-canvas: #f6f7f5;
+  --color-ink: #1c2420;
+  --color-ink-muted: #5b665f;
+  --color-line: #e3e7e4;
+
+  /* System fonts: zero download cost on slow mobile data, and good Devanagari coverage. */
+  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans', 'Noto Sans Devanagari', sans-serif;
+
+  --radius-card: 0.875rem;
+  --shadow-card: 0 1px 2px rgb(16 24 20 / 0.06), 0 1px 3px rgb(16 24 20 / 0.08);
+}
+
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    @apply bg-canvas text-ink font-sans antialiased;
+  }
+
+  :focus-visible {
+    @apply outline-brand-600 outline-2 outline-offset-2;
+  }
+}

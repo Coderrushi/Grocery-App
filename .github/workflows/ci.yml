@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend (build + unit + integration tests)
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        # Production target is MySQL 8.4 LTS. Running CI on Linux also catches table-name
+        # case-sensitivity mistakes that a Windows dev machine would hide.
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: ci-root-password
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd "mysqladmin ping -h 127.0.0.1 -pci-root-password"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+
+    env:
+      ConnectionStrings__GroceryTestDb: Server=127.0.0.1;Port=3306;Database=grocery_test;User=root;Password=ci-root-password;SslMode=Disabled
+      DOTNET_NOLOGO: true
+
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: global.json
+      - run: dotnet restore
+      - run: dotnet build --no-restore -c Release
+      - run: dotnet test --no-build -c Release
+
+  frontend:
+    name: Frontend (lint + test + build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run format:check
+      - run: npm test
+      - run: npm run build

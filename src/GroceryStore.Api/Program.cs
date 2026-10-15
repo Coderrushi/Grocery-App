@@ -9,6 +9,7 @@ using GroceryStore.Api.Modules.Cart;
 using GroceryStore.Api.Modules.Catalog;
 using GroceryStore.Api.Modules.Customers;
 using GroceryStore.Api.Modules.Identity;
+using GroceryStore.Api.Modules.Wallet;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -49,6 +50,7 @@ builder.Services.AddAppIdentity(builder.Configuration, builder.Environment);
 builder.Services.AddCustomers();
 builder.Services.AddCatalog();
 builder.Services.AddCart();
+builder.Services.AddWallet();
 builder.Services.AddMedia(builder.Configuration, builder.Environment);
 
 // ---------- HTTP pipeline ----------

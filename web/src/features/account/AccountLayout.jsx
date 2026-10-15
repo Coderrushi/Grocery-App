@@ -2,6 +2,7 @@ import { NavLink, Outlet } from 'react-router'
 
 const tabs = [
   { to: '/account', label: 'Profile', end: true },
+  { to: '/account/wallet', label: 'Wallet' },
   { to: '/account/addresses', label: 'Addresses' },
 ]
 

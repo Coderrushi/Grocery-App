@@ -1,10 +1,11 @@
 import { useState } from 'react'
+import { Link } from 'react-router'
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { apiClient } from '../../shared/api/apiClient'
 import { Button } from '../../shared/ui/Button'
 import { ErrorAlert } from '../../shared/ui/Alert'
 import { Spinner } from '../../shared/ui/Spinner'
-import { formatDateTime } from '../../shared/utils/format'
+import { formatCurrency, formatDateTime } from '../../shared/utils/format'
 
 function useCustomers({ search, page }) {
   return useQuery({
@@ -65,22 +66,28 @@ export function AdminCustomersPage() {
                   <th className="px-4 py-3 font-semibold">Mobile</th>
                   <th className="px-4 py-3 font-semibold">Email</th>
                   <th className="px-4 py-3 font-semibold">Addresses</th>
+                  <th className="px-4 py-3 text-right font-semibold">Wallet</th>
                   <th className="px-4 py-3 font-semibold">Registered</th>
                 </tr>
               </thead>
               <tbody className="divide-line divide-y">
                 {data.items.map((c) => (
                   <tr key={c.id}>
-                    <td className="px-4 py-3 font-medium">{c.fullName}</td>
+                    <td className="px-4 py-3 font-medium">
+                      <Link to={`/admin/customers/${c.id}`} className="text-brand-700 hover:underline">
+                        {c.fullName}
+                      </Link>
+                    </td>
                     <td className="px-4 py-3">{c.phoneNumber}</td>
                     <td className="px-4 py-3">{c.email}</td>
                     <td className="px-4 py-3">{c.addressCount}</td>
+                    <td className="px-4 py-3 text-right tabular-nums">{formatCurrency(c.walletBalance)}</td>
                     <td className="px-4 py-3 whitespace-nowrap">{formatDateTime(c.registeredAtUtc)}</td>
                   </tr>
                 ))}
                 {data.items.length === 0 && (
                   <tr>
-                    <td colSpan={5} className="text-ink-muted px-4 py-8 text-center">
+                    <td colSpan={6} className="text-ink-muted px-4 py-8 text-center">
                       No customers found.
                     </td>
                   </tr>

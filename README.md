@@ -89,6 +89,11 @@ Prerequisites: .NET SDK 10.0.2xx, Node 24, MySQL 8.x.
   prices and stock. Guests keep `[{ productId, quantity }]` in localStorage, priced by
   `/api/cart/preview` and merged into the account at sign-in. Delivery rules live in `DeliveryCharges`
   in `appsettings.json`. The app refuses to start if those values are invalid.
+- **Wallet:** move money only through `WalletService.CreditAsync`/`DebitAsync`, inside a
+  transaction ([ADR 0003](docs/adr/0003-wallet-ledger.md)). Give every event-driven movement a
+  unique `Reference` (`topup:{id}`, `order:{id}:payment`) so it can never be applied twice.
+  Payments are simulated (`SimulatedPaymentGateway`); a real provider replaces that one
+  `IPaymentGateway` registration. Limits are in `Wallet` in `appsettings.json`.
 - **Media:** go through `IMediaStorage`. Validate uploads by content (`ImageFile.DetectExtension`),
   never by file name.
 - **Time:** store UTC `DateTime` (never `DateTimeOffset`), and display in IST via `formatDateTime`.

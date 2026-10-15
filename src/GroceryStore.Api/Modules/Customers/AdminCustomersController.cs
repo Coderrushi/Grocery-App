@@ -32,7 +32,8 @@ public sealed class AdminCustomersController(AppDbContext db) : ControllerBase
             .OrderByDescending(u => u.CreatedAtUtc).ThenByDescending(u => u.Id)
             .Select(u => new CustomerSummaryResponse(
                 u.Id, u.FullName, u.Email!, u.PhoneNumber, u.CreatedAtUtc,
-                db.Set<Address>().Count(a => a.UserId == u.Id)))
+                db.Set<Address>().Count(a => a.UserId == u.Id),
+                db.Set<Wallet.Wallet>().Where(w => w.UserId == u.Id).Select(w => (decimal?)w.Balance).FirstOrDefault() ?? 0m))
             .ToPagedResultAsync(paging, ct);
     }
 }

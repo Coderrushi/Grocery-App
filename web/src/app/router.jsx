@@ -30,6 +30,7 @@ export const routes = [
             lazy: lazyPage(() => import('../features/account/AccountLayout'), 'AccountLayout'),
             children: [
               { index: true, lazy: lazyPage(() => import('../features/account/ProfilePage'), 'ProfilePage') },
+              { path: 'wallet', lazy: lazyPage(() => import('../features/wallet/WalletPage'), 'WalletPage') },
               {
                 path: 'addresses',
                 lazy: lazyPage(() => import('../features/account/AddressesPage'), 'AddressesPage'),
@@ -76,6 +77,10 @@ export const routes = [
               {
                 path: 'customers',
                 lazy: lazyPage(() => import('../features/admin/AdminCustomersPage'), 'AdminCustomersPage'),
+              },
+              {
+                path: 'customers/:id',
+                lazy: lazyPage(() => import('../features/admin/AdminCustomerWalletPage'), 'AdminCustomerWalletPage'),
               },
             ],
           },

@@ -55,4 +55,5 @@ public sealed record CustomerSummaryResponse(
     string Email,
     string? PhoneNumber,
     DateTime RegisteredAtUtc,
-    int AddressCount);
+    int AddressCount,
+    decimal WalletBalance);

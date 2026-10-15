@@ -10,6 +10,7 @@ import { ListingControls } from './ListingControls'
 import { useListingParams } from './useListingParams'
 import { ProductGrid } from './ProductGrid'
 import { DiscountRibbon, PriceTag, ProductImage, StockBadge } from './ProductBits'
+import { AddToCart } from '../cart/AddToCart'
 
 function usePageTitle(title) {
   useEffect(() => {
@@ -110,7 +111,10 @@ export function ProductPage() {
               <span className="text-success-600 text-xs font-semibold">In stock</span>
             )}
           </div>
-          {/* Phase 4: quantity selector and "Add to cart" go here. */}
+          <AddToCart product={product} size="lg" className="mt-5" />
+          {product.maxQuantity > 0 && product.maxQuantity < 10 && (
+            <p className="text-ink-muted mt-2 text-xs">Limit {product.maxQuantity} per order</p>
+          )}
           {description && (
             <section className="mt-6">
               <h2 className="font-semibold">About this product</h2>

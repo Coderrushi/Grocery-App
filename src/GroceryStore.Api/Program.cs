@@ -5,6 +5,7 @@ using GroceryStore.Api.Common.Errors;
 using GroceryStore.Api.Common.Media;
 using GroceryStore.Api.Common.Validation;
 using GroceryStore.Api.Data;
+using GroceryStore.Api.Modules.Cart;
 using GroceryStore.Api.Modules.Catalog;
 using GroceryStore.Api.Modules.Customers;
 using GroceryStore.Api.Modules.Identity;
@@ -47,6 +48,7 @@ builder.Services.AddHealthChecks()
 builder.Services.AddAppIdentity(builder.Configuration, builder.Environment);
 builder.Services.AddCustomers();
 builder.Services.AddCatalog();
+builder.Services.AddCart();
 builder.Services.AddMedia(builder.Configuration, builder.Environment);
 
 // ---------- HTTP pipeline ----------

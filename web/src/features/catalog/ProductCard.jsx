@@ -1,6 +1,7 @@
 import { Link } from 'react-router'
 import { DiscountRibbon, PriceTag, ProductImage, StockBadge } from './ProductBits'
 import { productUrl } from './productUrl'
+import { AddToCart } from '../cart/AddToCart'
 
 export function ProductCard({ product }) {
   const soldOut = product.stockStatus === 'OutOfStock'
@@ -23,7 +24,7 @@ export function ProductCard({ product }) {
           <PriceTag product={product} />
           <StockBadge product={product} />
         </div>
-        {/* Phase 4: "Add" button / quantity stepper goes here. */}
+        <AddToCart product={product} className="mt-2 w-full" />
       </div>
     </li>
   )

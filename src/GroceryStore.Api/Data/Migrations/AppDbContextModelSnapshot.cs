@@ -19,6 +19,35 @@ namespace GroceryStore.Api.Data.Migrations
                 .HasAnnotation("ProductVersion", "10.0.9")
                 .HasAnnotation("Relational:MaxIdentifierLength", 64);
 
+            modelBuilder.Entity("GroceryStore.Api.Modules.Cart.CartItem", b =>
+                {
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("AddedAtUtc")
+                        .HasPrecision(6)
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasPrecision(6)
+                        .HasColumnType("datetime(6)");
+
+                    b.HasKey("UserId", "ProductId");
+
+                    b.HasIndex("ProductId");
+
+                    b.ToTable("cart_items", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_cart_items_quantity_positive", "`Quantity` > 0");
+                        });
+                });
+
             modelBuilder.Entity("GroceryStore.Api.Modules.Catalog.Category", b =>
                 {
                     b.Property<int>("Id")
@@ -484,6 +513,21 @@ namespace GroceryStore.Api.Data.Migrations
                     b.HasKey("UserId", "LoginProvider", "Name");
 
                     b.ToTable("user_tokens", (string)null);
+                });
+
+            modelBuilder.Entity("GroceryStore.Api.Modules.Cart.CartItem", b =>
+                {
+                    b.HasOne("GroceryStore.Api.Modules.Catalog.Product", null)
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("GroceryStore.Api.Modules.Identity.AppUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("GroceryStore.Api.Modules.Catalog.InventoryAdjustment", b =>

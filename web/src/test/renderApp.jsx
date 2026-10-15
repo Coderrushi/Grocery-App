@@ -41,7 +41,28 @@ export const customer = {
   roles: ['Customer'],
 }
 
-export const signedInAs = (user) => ({ 'GET /auth/me': () => [200, user] })
+export const emptyCart = {
+  lines: [],
+  totals: {
+    itemCount: 0,
+    subtotal: 0,
+    mrpTotal: 0,
+    savings: 0,
+    deliveryFee: 0,
+    total: 0,
+    amountToFreeDelivery: 0,
+    minimumOrderAmount: 99,
+    meetsMinimumOrder: false,
+  },
+  hasIssues: false,
+  canCheckout: false,
+}
+
+/** Signed in, with an empty saved cart unless a test overrides 'GET /cart'. */
+export const signedInAs = (user) => ({
+  'GET /auth/me': () => [200, user],
+  'GET /cart': () => [200, emptyCart],
+})
 
 /** Renders the real route table at `path`, with a fresh query cache per test. */
 export function renderApp(path) {

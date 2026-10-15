@@ -4,6 +4,7 @@ import { HomePage } from '../pages/HomePage'
 import { NotFoundPage, RouteErrorPage } from '../pages/ErrorPages'
 import { RequireAuth } from '../features/auth/RequireAuth'
 import { CategoryPage, ProductPage, SearchPage } from '../features/catalog/CatalogPages'
+import { CartPage } from '../features/cart/CartPage'
 
 // Storefront pages ship in the main bundle. Account, sign-in and admin pages (and the form libraries
 // they use) are downloaded on first visit, keeping the initial load small on mobile data.
@@ -18,6 +19,7 @@ export const routes = [
       { path: 'category/:slug', element: <CategoryPage /> },
       { path: 'search', element: <SearchPage /> },
       { path: 'products/:id/:slug?', element: <ProductPage /> },
+      { path: 'cart', element: <CartPage /> },
       { path: 'login', lazy: lazyPage(() => import('../features/auth/LoginPage'), 'LoginPage') },
       { path: 'register', lazy: lazyPage(() => import('../features/auth/RegisterPage'), 'RegisterPage') },
       {

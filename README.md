@@ -85,6 +85,10 @@ Prerequisites: .NET SDK 10.0.2xx, Node 24, MySQL 8.x.
   `inventory_adjustments` ledger row). Never set `StockQuantity` directly. Products are deactivated,
   never deleted.
 - **Admin edits** carry the product `Version`; a stale version returns 409 instead of overwriting.
+- **Cart:** priced only by the API (`CartService.PriceAsync` + `CartPricing`), always at current
+  prices and stock. Guests keep `[{ productId, quantity }]` in localStorage, priced by
+  `/api/cart/preview` and merged into the account at sign-in. Delivery rules live in `DeliveryCharges`
+  in `appsettings.json`. The app refuses to start if those values are invalid.
 - **Media:** go through `IMediaStorage`. Validate uploads by content (`ImageFile.DetectExtension`),
   never by file name.
 - **Time:** store UTC `DateTime` (never `DateTimeOffset`), and display in IST via `formatDateTime`.

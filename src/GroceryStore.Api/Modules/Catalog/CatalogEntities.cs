@@ -75,6 +75,10 @@ public enum InventoryReason
     Damaged,
     Expired,
     Returned,
+
+    // System-only reasons, written by checkout and cancellation (never chosen by staff):
+    Sale,
+    OrderCancelled,
 }
 
 /// <summary>

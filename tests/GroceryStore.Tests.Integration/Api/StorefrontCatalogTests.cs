@@ -52,6 +52,22 @@ public sealed class StorefrontCatalogTests(GroceryApiFactory factory)
     }
 
     [Fact]
+    public async Task Products_named_after_the_search_word_rank_above_aisle_only_matches()
+    {
+        // Regression: "ghee" used to list Garam Masala (aisle "Oils, Ghee & Masalas") before "Pure Cow Ghee".
+        using var admin = await factory.SignedInAdminAsync(_ct);
+        var tag = CatalogTestData.Unique("rank").Replace(" ", "", StringComparison.Ordinal);
+        var aisle = await admin.CreateCategoryAsync($"Oils {tag} Masalas", ct: _ct);
+        await admin.CreateProductAsync(CatalogTestData.NewProduct(aisle.Id, "Aaa Garam Masala") with { IsFeatured = true }, _ct);
+        var named = await admin.CreateProductAsync(CatalogTestData.NewProduct(aisle.Id, $"Pure Cow {tag}"), _ct);
+
+        var results = await BrowseAsync($"search={tag}");
+
+        Assert.Equal(2, results.TotalCount);
+        Assert.Equal(named.Id, results.Items[0].Id);
+    }
+
+    [Fact]
     public async Task Search_treats_sql_wildcards_as_plain_text()
     {
         using var admin = await factory.SignedInAdminAsync(_ct);

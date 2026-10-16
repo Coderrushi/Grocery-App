@@ -38,6 +38,41 @@
   --shadow-card: 0 1px 2px rgb(16 24 20 / 0.06), 0 1px 3px rgb(16 24 20 / 0.08);
 }
 
+/*
+  Dark theme: the same tokens with dark values. src/shared/theme/theme.js sets data-theme on <html>
+  (resolving "System" from the OS setting), so every component switches without its own dark styles.
+  Brand-600 (buttons, white text) stays the same; the light end of each scale (50/100/200, used for
+  tinted backgrounds) becomes dark tints, and the dark end (700/900, used for text) becomes lighter.
+*/
+:root[data-theme='dark'] {
+  --color-brand-50: #12261a;
+  --color-brand-100: #173823;
+  --color-brand-200: #1f5a34;
+  --color-brand-500: #2fb565;
+  --color-brand-600: #17843f;
+  --color-brand-700: #2fa45a;
+  --color-brand-900: #bbf7d0;
+
+  --color-accent-100: #3a2a12;
+  --color-accent-500: #f29a33;
+  --color-accent-600: #f5ad5b;
+
+  --color-danger-50: #2c1515;
+  --color-danger-600: #cc3333;
+  --color-danger-700: #f58a8a;
+  --color-success-600: #22a957;
+  --color-surface: #171d1a;
+  --color-canvas: #0f1412;
+  --color-ink: #e6ece8;
+  --color-ink-muted: #9aa6a0;
+  --color-line: #2a332e;
+
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.4), 0 1px 3px rgb(0 0 0 / 0.5);
+}
+
+/* Lets components use dark: utilities if a one-off tweak is ever needed. */
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
+
 @layer base {
   html {
     -webkit-tap-highlight-color: transparent;

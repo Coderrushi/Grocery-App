@@ -18,7 +18,12 @@ const REASONS = [
   { value: 'Correction', label: 'Stock-count correction (+/−)', sign: 0 },
 ]
 
-const REASON_LABELS = { InitialStock: 'Opening stock', ...Object.fromEntries(REASONS.map((r) => [r.value, r.label])) }
+const REASON_LABELS = {
+  InitialStock: 'Opening stock',
+  Sale: 'Sold (order)',
+  OrderCancelled: 'Order cancelled (returned)',
+  ...Object.fromEntries(REASONS.map((r) => [r.value, r.label])),
+}
 
 const schema = z.object({
   reason: z.enum(REASONS.map((r) => r.value)),

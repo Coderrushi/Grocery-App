@@ -25,11 +25,17 @@ export const routes = [
       {
         element: <RequireAuth />,
         children: [
+          { path: 'checkout', lazy: lazyPage(() => import('../features/orders/CheckoutPage'), 'CheckoutPage') },
           {
             path: 'account',
             lazy: lazyPage(() => import('../features/account/AccountLayout'), 'AccountLayout'),
             children: [
               { index: true, lazy: lazyPage(() => import('../features/account/ProfilePage'), 'ProfilePage') },
+              { path: 'orders', lazy: lazyPage(() => import('../features/orders/MyOrdersPages'), 'MyOrdersPage') },
+              {
+                path: 'orders/:id',
+                lazy: lazyPage(() => import('../features/orders/MyOrdersPages'), 'OrderDetailPage'),
+              },
               { path: 'wallet', lazy: lazyPage(() => import('../features/wallet/WalletPage'), 'WalletPage') },
               {
                 path: 'addresses',
@@ -56,7 +62,15 @@ export const routes = [
             children: [
               {
                 index: true,
-                lazy: lazyPage(() => import('../features/admin/AdminProductsPage'), 'AdminProductsPage'),
+                lazy: lazyPage(() => import('../features/admin/AdminOrdersPages'), 'AdminOrdersPage'),
+              },
+              {
+                path: 'orders',
+                lazy: lazyPage(() => import('../features/admin/AdminOrdersPages'), 'AdminOrdersPage'),
+              },
+              {
+                path: 'orders/:id',
+                lazy: lazyPage(() => import('../features/admin/AdminOrdersPages'), 'AdminOrderDetailPage'),
               },
               {
                 path: 'products',

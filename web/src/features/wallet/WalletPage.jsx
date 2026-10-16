@@ -124,9 +124,9 @@ export function WalletPage() {
   return (
     <div className="space-y-6">
       <section className="rounded-card bg-brand-600 shadow-card p-6 text-white">
-        <p className="text-brand-100 text-sm font-semibold">Wallet balance</p>
+        <p className="text-sm font-semibold text-white/80">Wallet balance</p>
         <p className="mt-1 text-4xl font-bold tabular-nums">{formatCurrency(wallet.balance)}</p>
-        <p className="text-brand-100 mt-2 text-xs">Usable only at this store. Wallet balance can't be withdrawn.</p>
+        <p className="mt-2 text-xs text-white/80">Usable only at this store. Wallet balance can't be withdrawn.</p>
       </section>
       <TopUpForm wallet={wallet} />
       <Card title="Transactions">

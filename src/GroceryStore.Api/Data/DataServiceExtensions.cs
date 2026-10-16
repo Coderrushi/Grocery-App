@@ -20,9 +20,12 @@ internal static class DataServiceExtensions
         services.AddDbContext<AppDbContext>(options =>
             options.UseMySQL(connectionString, mysql =>
             {
-                // Retries transient failures (dropped connections, deadlocks). Consequence: code that opens
-                // its own transaction must run inside db.Database.CreateExecutionStrategy().ExecuteAsync(...).
-                mysql.EnableRetryOnFailure(maxRetryCount: 3);
+                // Retries transient failures. Consequence: code that opens its own transaction must run
+                // inside db.Database.CreateExecutionStrategy().ExecuteAsync(...), and must rebuild its
+                // state at the start of each attempt (see OrderService).
+                // The Oracle provider does not treat deadlocks as transient by default (found in Phase 6),
+                // so they are added explicitly: 1213 = deadlock, 1205 = lock wait timeout.
+                mysql.EnableRetryOnFailure(maxRetryCount: 3, maxRetryDelay: TimeSpan.FromSeconds(2), errorNumbersToAdd: [1213, 1205]);
             }));
 
         return services;

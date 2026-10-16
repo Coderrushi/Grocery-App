@@ -1,6 +1,7 @@
 import { NavLink, Outlet } from 'react-router'
 
 const links = [
+  { to: '/admin/orders', label: 'Orders', icon: '🧾' },
   { to: '/admin/products', label: 'Products', icon: '📦' },
   { to: '/admin/categories', label: 'Categories', icon: '🗂️' },
   { to: '/admin/customers', label: 'Customers', icon: '👥' },

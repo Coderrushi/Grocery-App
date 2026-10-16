@@ -1,7 +1,7 @@
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { useNavigate, useParams } from 'react-router'
+import { useNavigate, useParams, useSearchParams } from 'react-router'
 import { Button } from '../../shared/ui/Button'
 import { ErrorAlert } from '../../shared/ui/Alert'
 import { Card } from '../../shared/ui/Card'
@@ -12,6 +12,7 @@ import { mobileField, nameField, pincodeField } from '../../shared/validation/sc
 import { INDIAN_STATES } from '../../shared/utils/india'
 import { useCurrentUser } from '../auth/useAuth'
 import { useAddress, useSaveAddress } from './accountApi'
+import { safeReturnPath } from '../auth/safeReturnPath'
 
 const LABELS = ['Home', 'Work', 'Other']
 
@@ -144,6 +145,9 @@ export function AddressFormPage() {
   const { id } = useParams()
   const addressId = id ? Number(id) : null
   const navigate = useNavigate()
+  // e.g. ?returnTo=/checkout when the customer adds an address while checking out
+  const [searchParams] = useSearchParams()
+  const returnTo = searchParams.has('returnTo') ? safeReturnPath(searchParams.get('returnTo')) : '/account/addresses'
   const { data: user } = useCurrentUser()
   const existing = useAddress(addressId)
   const save = useSaveAddress()
@@ -152,10 +156,7 @@ export function AddressFormPage() {
   if (addressId && existing.error) return <ErrorAlert error={existing.error} title="Couldn't load this address" />
 
   const onSubmit = (values, showFieldErrors) =>
-    save.mutate(
-      { id: addressId, ...values },
-      { onSuccess: () => navigate('/account/addresses'), onError: showFieldErrors },
-    )
+    save.mutate({ id: addressId, ...values }, { onSuccess: () => navigate(returnTo), onError: showFieldErrors })
 
   return (
     <Card title={addressId ? 'Edit address' : 'Add a delivery address'}>

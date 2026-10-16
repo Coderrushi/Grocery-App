@@ -1,9 +1,9 @@
 import { dismissToast, useToasts } from './toast'
 
 const tones = {
-  info: 'bg-ink text-white',
-  success: 'bg-brand-700 text-white',
-  error: 'bg-danger-700 text-white',
+  info: 'bg-ink text-canvas', // inverts with the theme: dark on light, light on dark
+  success: 'bg-brand-600 text-white',
+  error: 'bg-danger-600 text-white',
 }
 
 /** Bottom-centre on phones (above the cart bar), bottom-right on desktop. */

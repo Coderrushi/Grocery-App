@@ -94,8 +94,11 @@ public sealed class CatalogQueryService(AppDbContext db, IMediaStorage media)
             ProductSort.Name => ordered.ThenBy(p => p.Name),
             ProductSort.Newest => ordered.ThenByDescending(p => p.CreatedAtUtc),
             ProductSort.BiggestDiscount => ordered.ThenByDescending(p => (p.Mrp - p.Price) / p.Mrp),
+            // Name starts with the word > name contains it > brand matches > only the aisle name matched.
             _ when terms.Length > 0 => ordered
                 .ThenByDescending(p => p.Name.StartsWith(terms[0]))
+                .ThenByDescending(p => p.Name.Contains(terms[0]))
+                .ThenByDescending(p => p.Brand != null && p.Brand.Contains(terms[0]))
                 .ThenByDescending(p => p.IsFeatured)
                 .ThenBy(p => p.Name),
             _ => ordered.ThenByDescending(p => p.IsFeatured).ThenBy(p => p.Name),

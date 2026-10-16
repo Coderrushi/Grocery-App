@@ -9,6 +9,7 @@ import { config } from '../../app/config'
 import { productUrl } from '../catalog/productUrl'
 import { ProductImage } from '../catalog/ProductBits'
 import { AddToCart } from './AddToCart'
+import { BillLines } from './BillLines'
 import { useCart, useClearCart, useSetCartQuantity } from './useCart'
 
 function LineIssue({ line }) {
@@ -108,36 +109,7 @@ function BillSummary({ cart, signedIn }) {
   const { totals } = cart
   return (
     <Card title="Bill details" className="lg:sticky lg:top-24">
-      <dl className="space-y-2 text-sm">
-        <div className="flex justify-between">
-          <dt>Item total</dt>
-          <dd>
-            {totals.savings > 0 && (
-              <span className="text-ink-muted mr-2 line-through">{formatCurrency(totals.mrpTotal)}</span>
-            )}
-            {formatCurrency(totals.subtotal)}
-          </dd>
-        </div>
-        <div className="flex justify-between">
-          <dt>Delivery fee</dt>
-          <dd>
-            {totals.deliveryFee === 0 ? (
-              <span className="text-brand-700 font-semibold">FREE</span>
-            ) : (
-              formatCurrency(totals.deliveryFee)
-            )}
-          </dd>
-        </div>
-        <div className="border-line flex justify-between border-t pt-2 text-base font-bold">
-          <dt>To pay</dt>
-          <dd>{formatCurrency(totals.total)}</dd>
-        </div>
-      </dl>
-      {totals.savings > 0 && (
-        <p className="bg-brand-50 text-brand-900 mt-3 rounded-lg px-3 py-2 text-sm font-semibold">
-          You save {formatCurrency(totals.savings)} on this order
-        </p>
-      )}
+      <BillLines totals={totals} />
       <div className="mt-4 space-y-3">
         <FreeDeliveryProgress totals={totals} />
         {!totals.meetsMinimumOrder && (
@@ -148,10 +120,18 @@ function BillSummary({ cart, signedIn }) {
         )}
         {cart.hasIssues && <p className="text-danger-700 text-sm">Please fix the items marked above to continue.</p>}
         {signedIn ? (
-          // Checkout (address, slot, wallet payment) is built in Phase 6.
-          <Button className="w-full" disabled title="Checkout arrives in Phase 6">
-            Proceed to checkout
-          </Button>
+          cart.canCheckout ? (
+            <Link
+              to="/checkout"
+              className="bg-brand-600 hover:bg-brand-700 flex h-12 w-full items-center justify-center rounded-lg font-semibold text-white"
+            >
+              Proceed to checkout
+            </Link>
+          ) : (
+            <Button className="w-full" size="lg" disabled>
+              Proceed to checkout
+            </Button>
+          )
         ) : (
           <Link
             to="/login?returnTo=%2Fcart"

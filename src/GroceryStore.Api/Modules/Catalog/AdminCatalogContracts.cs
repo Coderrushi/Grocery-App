@@ -146,7 +146,9 @@ internal sealed class AdjustStockRequestValidator : AbstractValidator<AdjustStoc
         RuleFor(r => r.QuantityChange).NotEqual(0).WithMessage("Enter how many units to add or remove.")
             .InclusiveBetween(-100_000, 100_000);
         RuleFor(r => r.Reason).IsInEnum()
-            .NotEqual(InventoryReason.InitialStock).WithMessage("Initial stock is set when the product is created.");
+            .NotEqual(InventoryReason.InitialStock).WithMessage("Initial stock is set when the product is created.")
+            .Must(r => r is not (InventoryReason.Sale or InventoryReason.OrderCancelled))
+            .WithMessage("Sales and cancellations adjust stock automatically.");
         RuleFor(r => r.QuantityChange).GreaterThan(0)
             .When(r => r.Reason is InventoryReason.Restock or InventoryReason.Returned)
             .WithMessage("A restock or return adds units, so the quantity must be positive.");

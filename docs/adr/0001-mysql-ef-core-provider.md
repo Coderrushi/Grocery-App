@@ -57,6 +57,14 @@ which runs in CI on every build:
    first query or save inside the transaction throws ("does not support user-initiated
    transactions"), and a test proves it.
 4. **Keys are `int` AUTO_INCREMENT**, avoiding the provider's `Guid` mapping differences.
+5. **Deadlocks are not retried by default.** Found in Phase 6: MySQL error 1213 (deadlock) reached
+   the client as a 500. `EnableRetryOnFailure` now lists 1213 and 1205 (lock wait timeout)
+   explicitly. Retried transaction bodies must rebuild their state on each attempt
+   (`ChangeTracker.Clear()` and reload).
+6. **Foreign-key checks take shared locks.** Inserting a child row (for example `order_items` →
+   `products`) share-locks the parent. Two transactions that do this and then update the same parent
+   deadlock. Rule: **update the contended parent rows first** (stock), in a consistent order
+   (ascending id), then insert the child rows.
 
 ## Alternatives if the provider becomes a blocker
 

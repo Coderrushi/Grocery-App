@@ -1,7 +1,7 @@
 const variants = {
   primary: 'bg-brand-600 text-white hover:bg-brand-700 disabled:bg-brand-600/50',
   secondary: 'border border-line bg-surface text-ink hover:bg-canvas disabled:text-ink-muted',
-  danger: 'bg-danger-600 text-white hover:bg-danger-700 disabled:bg-danger-600/50',
+  danger: 'bg-danger-600 text-white hover:brightness-110 disabled:bg-danger-600/50',
   ghost: 'text-brand-700 hover:bg-brand-50',
 }
 

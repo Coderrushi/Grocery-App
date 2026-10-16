@@ -94,6 +94,13 @@ Prerequisites: .NET SDK 10.0.2xx, Node 24, MySQL 8.x.
   unique `Reference` (`topup:{id}`, `order:{id}:payment`) so it can never be applied twice.
   Payments are simulated (`SimulatedPaymentGateway`); a real provider replaces that one
   `IPaymentGateway` registration. Limits are in `Wallet` in `appsettings.json`.
+- **Orders:** `OrderService.PlaceOrderAsync` is a single transaction that re-prices, checks the
+  customer's expected total, reserves stock, inserts items, debits the wallet and empties the cart.
+  Status changes go only through `TransitionAsync`, which enforces `OrderWorkflow`. Cancelling
+  refunds and restocks in the same transaction. Retried transaction bodies clear the change tracker
+  and reload. Update contended rows (stock) before inserting rows that reference them
+  ([ADR 0001](docs/adr/0001-mysql-ef-core-provider.md), quirks 5–6). Delivery coverage is
+  `DeliveryArea:ServiceablePincodes` (empty = everywhere).
 - **Media:** go through `IMediaStorage`. Validate uploads by content (`ImageFile.DetectExtension`),
   never by file name.
 - **Time:** store UTC `DateTime` (never `DateTimeOffset`), and display in IST via `formatDateTime`.
@@ -106,5 +113,10 @@ Prerequisites: .NET SDK 10.0.2xx, Node 24, MySQL 8.x.
 - **Validation error keys** are camelCase JSON names, so the web app maps them to form fields with
   `applyServerErrors`.
 - **Web routes:** storefront pages are in the main bundle. Account and admin pages use `lazy` routes.
+- **Themes (Light / Dark / System):** use the design tokens (`bg-surface`, `text-ink`,
+  `text-brand-700`…), never raw colours. `index.css` redefines every token under
+  `[data-theme='dark']`, and `src/shared/theme/theme.js` sets that attribute ("System" follows the OS
+  live). On coloured backgrounds use `text-white`, not the light shades of a scale, because those
+  turn dark in dark mode. Keep text at 4.5:1 contrast or better in both themes.
 - **Packages:** versions live only in `Directory.Packages.props`. EF Core stays pinned to the
   MySQL provider's version.

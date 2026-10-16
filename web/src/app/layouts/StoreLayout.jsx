@@ -5,6 +5,7 @@ import { AccountNav } from '../../features/auth/AccountNav'
 import { SearchBox } from '../../features/catalog/SearchBox'
 import { CartBar, CartButton } from '../../features/cart/CartIndicators'
 import { GuestCartMerger } from '../../features/cart/GuestCartMerger'
+import { ThemeMenu } from '../../shared/theme/ThemeMenu'
 
 const currentYear = new Date().getFullYear()
 
@@ -28,6 +29,7 @@ export function StoreLayout() {
           </Link>
           <SearchBox className="hidden max-w-xl flex-1 md:block" />
           <div className="flex items-center gap-1">
+            <ThemeMenu />
             <AccountNav />
             <CartButton />
           </div>

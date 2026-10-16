@@ -1,7 +1,9 @@
 import { NavLink, Outlet } from 'react-router'
 
 const links = [
+  { to: '/admin', label: 'Dashboard', icon: '🏠', end: true },
   { to: '/admin/orders', label: 'Orders', icon: '🧾' },
+  { to: '/admin/reports', label: 'Reports', icon: '📊' },
   { to: '/admin/products', label: 'Products', icon: '📦' },
   { to: '/admin/categories', label: 'Categories', icon: '🗂️' },
   { to: '/admin/customers', label: 'Customers', icon: '👥' },
@@ -18,6 +20,7 @@ export function AdminLayout() {
             <li key={link.to}>
               <NavLink
                 to={link.to}
+                end={link.end}
                 className={({ isActive }) =>
                   `flex h-10 items-center gap-2 rounded-lg px-3 text-sm font-semibold whitespace-nowrap ${
                     isActive ? 'bg-brand-600 text-white' : 'hover:bg-brand-50'

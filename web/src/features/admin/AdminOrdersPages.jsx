@@ -8,7 +8,7 @@ import { formatCurrency, formatDateTime } from '../../shared/utils/format'
 import { OrderBody } from '../orders/MyOrdersPages'
 import { OrderProgress, OrderStatusBadge } from '../orders/orderStatus'
 import { STATUS } from '../orders/orderStatusInfo'
-import { useAdminOrder, useAdminOrders, useChangeOrderStatus } from '../orders/ordersApi'
+import { useAdminOrder, useAdminOrders, useBulkOrderStatus, useChangeOrderStatus } from '../orders/ordersApi'
 
 const TABS = [
   { status: 'Placed', label: 'New' },
@@ -20,6 +20,30 @@ const TABS = [
   { status: '', label: 'All' },
 ]
 
+// The step every order in a tab can take together. Cancelling is never bulk: each needs its own reason.
+const BULK_NEXT = { Placed: 'Confirmed', Confirmed: 'Packed', Packed: 'OutForDelivery', OutForDelivery: 'Delivered' }
+
+function BulkResult({ result }) {
+  if (!result) return null
+  const { updated, failed } = result
+  return (
+    <Alert
+      tone={failed.length ? 'error' : 'success'}
+      title={`${updated.length} order${updated.length === 1 ? '' : 's'} updated`}
+    >
+      {failed.length > 0 && (
+        <ul className="mt-1 list-disc pl-5">
+          {failed.map((f) => (
+            <li key={f.orderId}>
+              {f.orderNumber}: {f.reason}
+            </li>
+          ))}
+        </ul>
+      )}
+    </Alert>
+  )
+}
+
 export function AdminOrdersPage() {
   // The tab lives in the URL so the back button returns to the same list.
   const [params, setParams] = useSearchParams()
@@ -28,6 +52,25 @@ export function AdminOrdersPage() {
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
   const { data, isPending, isFetching, error } = useAdminOrders({ status, search, page })
+  const bulk = useBulkOrderStatus()
+  const [selected, setSelected] = useState(() => new Set())
+  const bulkNext = BULK_NEXT[status]
+  const pageIds = data?.items.map((o) => o.id) ?? []
+  const allSelected = pageIds.length > 0 && pageIds.every((id) => selected.has(id))
+
+  const toggle = (id) =>
+    setSelected((current) => {
+      const next = new Set(current)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  const resetSelection = () => {
+    setSelected(new Set())
+    bulk.reset()
+  }
+  const moveSelected = () =>
+    bulk.mutate({ orderIds: [...selected], status: bulkNext }, { onSuccess: () => setSelected(new Set()) })
 
   return (
     <div className="space-y-4">
@@ -43,6 +86,7 @@ export function AdminOrdersPage() {
                 onClick={() => {
                   setParams(tab.status === 'Placed' ? {} : { status: tab.status })
                   setPage(1)
+                  resetSelection()
                 }}
                 className="border-line aria-pressed:border-brand-600 aria-pressed:bg-brand-600 h-9 rounded-full border px-3 text-sm font-semibold whitespace-nowrap aria-pressed:text-white"
               >
@@ -75,6 +119,20 @@ export function AdminOrdersPage() {
         </Button>
       </form>
 
+      {bulkNext && selected.size > 0 && (
+        <div className="border-brand-600 bg-brand-50 flex flex-wrap items-center gap-3 rounded-lg border p-3 text-sm">
+          <span className="font-semibold">{selected.size} selected</span>
+          <Button size="sm" disabled={bulk.isPending} onClick={moveSelected}>
+            {STATUS[bulkNext].icon} {NEXT_ACTION_LABELS[bulkNext]} ({selected.size})
+          </Button>
+          <Button size="sm" variant="ghost" onClick={() => setSelected(new Set())}>
+            Clear
+          </Button>
+        </div>
+      )}
+      <ErrorAlert error={bulk.error} title="Couldn't update the orders" />
+      <BulkResult result={bulk.data} />
+
       {isPending && <Spinner />}
       {error && <ErrorAlert error={error} title="Couldn't load orders" />}
       {data && (
@@ -83,6 +141,18 @@ export function AdminOrdersPage() {
             <table className={`w-full text-left text-sm ${isFetching ? 'opacity-70' : ''}`}>
               <thead className="bg-canvas text-ink-muted">
                 <tr>
+                  {bulkNext && (
+                    <th className="w-10 py-3 pl-4">
+                      <input
+                        type="checkbox"
+                        aria-label="Select all orders on this page"
+                        checked={allSelected}
+                        disabled={pageIds.length === 0}
+                        onChange={() => setSelected(allSelected ? new Set() : new Set(pageIds))}
+                        className="accent-brand-600 h-4 w-4"
+                      />
+                    </th>
+                  )}
                   <th className="px-4 py-3 font-semibold">Order</th>
                   <th className="px-4 py-3 font-semibold">Placed</th>
                   <th className="px-4 py-3 font-semibold">Customer</th>
@@ -94,6 +164,17 @@ export function AdminOrdersPage() {
               <tbody className="divide-line divide-y">
                 {data.items.map((o) => (
                   <tr key={o.id} className="hover:bg-canvas">
+                    {bulkNext && (
+                      <td className="py-3 pl-4">
+                        <input
+                          type="checkbox"
+                          aria-label={`Select ${o.orderNumber}`}
+                          checked={selected.has(o.id)}
+                          onChange={() => toggle(o.id)}
+                          className="accent-brand-600 h-4 w-4"
+                        />
+                      </td>
+                    )}
                     <td className="px-4 py-3">
                       <Link to={`/admin/orders/${o.id}`} className="text-brand-700 font-semibold hover:underline">
                         {o.orderNumber}
@@ -114,7 +195,7 @@ export function AdminOrdersPage() {
                 ))}
                 {data.items.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="text-ink-muted px-4 py-8 text-center">
+                    <td colSpan={bulkNext ? 7 : 6} className="text-ink-muted px-4 py-8 text-center">
                       No orders here.
                     </td>
                   </tr>
@@ -125,7 +206,15 @@ export function AdminOrdersPage() {
           <div className="flex items-center justify-between text-sm">
             <span className="text-ink-muted">{data.totalCount} orders · oldest first</span>
             <div className="flex items-center gap-2">
-              <Button size="sm" variant="secondary" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
+              <Button
+                size="sm"
+                variant="secondary"
+                disabled={page <= 1}
+                onClick={() => {
+                  setPage((p) => p - 1)
+                  setSelected(new Set())
+                }}
+              >
                 Previous
               </Button>
               <span>
@@ -135,7 +224,10 @@ export function AdminOrdersPage() {
                 size="sm"
                 variant="secondary"
                 disabled={page >= data.totalPages}
-                onClick={() => setPage((p) => p + 1)}
+                onClick={() => {
+                  setPage((p) => p + 1)
+                  setSelected(new Set())
+                }}
               >
                 Next
               </Button>
@@ -240,7 +332,16 @@ export function AdminOrderDetailPage() {
           <h1 className="text-2xl font-bold">{order.orderNumber}</h1>
           <p className="text-ink-muted text-sm">Placed {formatDateTime(order.placedAtUtc)}</p>
         </div>
-        <OrderStatusBadge status={order.status} />
+        <div className="flex items-center gap-3">
+          <OrderStatusBadge status={order.status} />
+          <Link
+            to={`/admin/orders/${order.id}/print`}
+            target="_blank"
+            className="border-line hover:bg-canvas rounded-lg border px-3 py-1.5 text-sm font-semibold"
+          >
+            🖨️ Packing slip
+          </Link>
+        </div>
       </div>
       {order.status !== 'Cancelled' && (
         <Card>

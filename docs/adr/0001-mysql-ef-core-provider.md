@@ -66,6 +66,12 @@ which runs in CI on every build:
    deadlock. Rule: **update the contended parent rows first** (stock), in a consistent order
    (ascending id), then insert the child rows.
 
+7. **Report days are IST, grouped in SQL.** Checked in Phase 7: grouping by
+   `o.PlacedAtUtc.AddMinutes(ShopTime.OffsetMinutes).Date` translates to
+   `CONVERT(DATE_ADD(PlacedAtUtc, INTERVAL 330.0 minute), date)` and runs in MySQL. This works
+   only because IST has a fixed offset (no daylight saving). Keep the offset a `const` so it reaches
+   SQL as a literal. `ReportTests` pins the boundary: an order at 00:15 IST counts on that IST day.
+
 ## Alternatives if the provider becomes a blocker
 
 - **EF Core 9 + Pomelo 9** on the .NET 10 runtime: mature, but breaks the EF Core 10 requirement.

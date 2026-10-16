@@ -62,7 +62,25 @@ export const routes = [
             children: [
               {
                 index: true,
-                lazy: lazyPage(() => import('../features/admin/AdminOrdersPages'), 'AdminOrdersPage'),
+                lazy: lazyPage(() => import('../features/reports/AdminDashboardPage'), 'AdminDashboardPage'),
+              },
+              {
+                path: 'reports',
+                lazy: lazyPage(() => import('../features/reports/AdminReportsPages'), 'AdminReportsLayout'),
+                children: [
+                  {
+                    index: true,
+                    lazy: lazyPage(() => import('../features/reports/AdminReportsPages'), 'SalesReportPage'),
+                  },
+                  {
+                    path: 'inventory',
+                    lazy: lazyPage(() => import('../features/reports/AdminReportsPages'), 'InventoryReportPage'),
+                  },
+                  {
+                    path: 'customers',
+                    lazy: lazyPage(() => import('../features/reports/AdminReportsPages'), 'CustomerReportPage'),
+                  },
+                ],
               },
               {
                 path: 'orders',
@@ -102,6 +120,13 @@ export const routes = [
       },
       { path: '*', element: <NotFoundPage /> },
     ],
+  },
+  {
+    // Outside the store layout: a printed packing slip has no header or navigation.
+    path: 'admin/orders/:id/print',
+    element: <RequireAuth role="Admin" />,
+    errorElement: <RouteErrorPage />,
+    children: [{ index: true, lazy: lazyPage(() => import('../features/admin/PackingSlipPage'), 'PackingSlipPage') }],
   },
 ]
 

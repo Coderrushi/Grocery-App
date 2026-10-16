@@ -96,3 +96,16 @@ export function useChangeOrderStatus(id) {
     },
   })
 }
+
+/** Moves several orders to the same next status. Resolves to { updated: [ids], failed: [{ orderNumber, reason }] }. */
+export function useBulkOrderStatus() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (request) => apiClient.post('/admin/orders/bulk-status', request),
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'orders'] })
+      queryClient.invalidateQueries({ queryKey: ['admin', 'order'] })
+      queryClient.invalidateQueries({ queryKey: ['admin', 'dashboard'] })
+    },
+  })
+}

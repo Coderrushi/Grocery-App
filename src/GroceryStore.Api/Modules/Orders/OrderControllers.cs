@@ -67,4 +67,12 @@ public sealed class AdminOrdersController(AdminOrderService orders) : Controller
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status422UnprocessableEntity)]
     public Task<AdminOrderDetailResponse> ChangeStatus(int id, ChangeOrderStatusRequest request, CancellationToken ct) =>
         orders.ChangeStatusAsync(id, request, User.GetUserId(), ct);
+
+    /// <summary>
+    /// Moves several orders to the same next status (e.g. confirm all new orders). Returns which ones moved
+    /// and why the others could not; a partly successful batch is still 200.
+    /// </summary>
+    [HttpPost("bulk-status")]
+    public Task<BulkOrderStatusResponse> ChangeStatusBulk(BulkOrderStatusRequest request, CancellationToken ct) =>
+        orders.ChangeStatusBulkAsync(request, User.GetUserId(), ct);
 }

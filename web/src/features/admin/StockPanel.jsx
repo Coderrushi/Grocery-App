@@ -8,22 +8,7 @@ import { SelectField, TextField } from '../../shared/ui/forms'
 import { applyServerErrors, formLevelError } from '../../shared/api/formErrors'
 import { formatDateTime } from '../../shared/utils/format'
 import { useAdjustStock, useStockHistory } from './adminCatalogApi'
-
-// Reasons the shopkeeper can pick, and whether they add (+1) or remove (-1) stock.
-const REASONS = [
-  { value: 'Restock', label: 'Restock (new delivery)', sign: 1 },
-  { value: 'Returned', label: 'Customer return', sign: 1 },
-  { value: 'Damaged', label: 'Damaged', sign: -1 },
-  { value: 'Expired', label: 'Expired', sign: -1 },
-  { value: 'Correction', label: 'Stock-count correction (+/−)', sign: 0 },
-]
-
-const REASON_LABELS = {
-  InitialStock: 'Opening stock',
-  Sale: 'Sold (order)',
-  OrderCancelled: 'Order cancelled (returned)',
-  ...Object.fromEntries(REASONS.map((r) => [r.value, r.label])),
-}
+import { REASONS, REASON_LABELS } from './stockReasons'
 
 const schema = z.object({
   reason: z.enum(REASONS.map((r) => r.value)),

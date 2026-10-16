@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Linq.Expressions;
 using GroceryStore.Api.Common;
 using GroceryStore.Api.Common.Errors;
 using GroceryStore.Api.Data;
@@ -34,16 +35,31 @@ public sealed class AdminOrderService(AppDbContext db, OrderService orders)
         var page = await source
             // Oldest first: the order that has waited longest is handled first.
             .OrderBy(o => o.PlacedAtUtc).ThenBy(o => o.Id)
-            .Select(o => new
-            {
-                o.Id, o.Status, o.PlacedAtUtc, o.Total,
-                ItemCount = o.Items.Sum(i => i.Quantity),
-                o.DeliveryAddress.RecipientName, o.DeliveryAddress.PhoneNumber, o.DeliveryAddress.Pincode,
-            })
+            .Select(SummaryRow.Projection)
             .ToPagedResultAsync(query.Paging, ct);
 
-        return page.Map(o => new AdminOrderSummaryResponse(
-            o.Id, Order.NumberFor(o.Id), o.Status, o.PlacedAtUtc, o.Total, o.ItemCount, o.RecipientName, o.PhoneNumber, o.Pincode));
+        return page.Map(r => r.ToResponse());
+    }
+
+    /// <summary>The most recently placed orders, newest first (dashboard).</summary>
+    public async Task<IReadOnlyList<AdminOrderSummaryResponse>> LatestAsync(int count, CancellationToken ct)
+    {
+        var rows = await Orders.OrderByDescending(o => o.PlacedAtUtc).ThenByDescending(o => o.Id)
+            .Take(count)
+            .Select(SummaryRow.Projection)
+            .ToListAsync(ct);
+        return [.. rows.Select(r => r.ToResponse())];
+    }
+
+    private sealed record SummaryRow(
+        int Id, OrderStatus Status, DateTime PlacedAtUtc, decimal Total, int ItemCount, string RecipientName, string PhoneNumber, string Pincode)
+    {
+        public static readonly Expression<Func<Order, SummaryRow>> Projection = o => new SummaryRow(
+            o.Id, o.Status, o.PlacedAtUtc, o.Total, o.Items.Sum(i => i.Quantity),
+            o.DeliveryAddress.RecipientName, o.DeliveryAddress.PhoneNumber, o.DeliveryAddress.Pincode);
+
+        public AdminOrderSummaryResponse ToResponse() => new(
+            Id, Order.NumberFor(Id), Status, PlacedAtUtc, Total, ItemCount, RecipientName, PhoneNumber, Pincode);
     }
 
     public async Task<AdminOrderDetailResponse> GetAsync(int orderId, CancellationToken ct)
@@ -67,5 +83,36 @@ public sealed class AdminOrderService(AppDbContext db, OrderService orders)
             ownerId: null, expectedVersion: request.Version, check: null, ct);
 
         return await GetAsync(orderId, ct);
+    }
+
+    /// <summary>
+    /// Moves several orders forward at once, e.g. confirming the morning's new orders. Each order is its
+    /// own transaction (cancellation stays one-at-a-time because it needs a reason the customer sees).
+    /// Orders that can't move — a customer cancelled meanwhile, or it is already further along — are
+    /// reported back rather than failing the whole batch.
+    /// </summary>
+    public async Task<BulkOrderStatusResponse> ChangeStatusBulkAsync(BulkOrderStatusRequest request, int adminId, CancellationToken ct)
+    {
+        List<int> updated = [];
+        List<BulkOrderFailure> failed = [];
+        foreach (var orderId in request.OrderIds.Distinct().Order())
+        {
+            try
+            {
+                await orders.TransitionAsync(orderId, request.Status, note: null, adminId,
+                    ownerId: null, expectedVersion: null, check: null, ct);
+                updated.Add(orderId);
+            }
+            catch (AppException ex)
+            {
+                failed.Add(new BulkOrderFailure(orderId, Order.NumberFor(orderId), ex.Message));
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                failed.Add(new BulkOrderFailure(orderId, Order.NumberFor(orderId), "Someone else updated this order at the same moment."));
+            }
+        }
+
+        return new BulkOrderStatusResponse(updated, failed);
     }
 }

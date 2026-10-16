@@ -103,7 +103,13 @@ Prerequisites: .NET SDK 10.0.2xx, Node 24, MySQL 8.x.
   `DeliveryArea:ServiceablePincodes` (empty = everywhere).
 - **Media:** go through `IMediaStorage`. Validate uploads by content (`ImageFile.DetectExtension`),
   never by file name.
+- **Reports:** `ReportService` computes everything live with GROUP BY queries. "Sales" means orders
+  placed in the period, minus cancelled ones, counted on their IST day (`ShopTime`). Periods are
+  `?from=&to=` IST dates, both included, at most 366 days. CSV downloads go through `CsvBuilder`
+  (UTF-8 BOM, invariant numbers, formula-injection guard). Charts are hand-written SVG in
+  `features/reports/charts.jsx` using the `chart-bar` colour token.
 - **Time:** store UTC `DateTime` (never `DateTimeOffset`), and display in IST via `formatDateTime`.
+  Calendar days (report dates) are `DateOnly` / "yyyy-mm-dd" strings, formatted with `formatDay`.
 - **Transactions:** wrap explicit transactions in `CreateExecutionStrategy().ExecuteAsync(...)`.
 - **Tables:** lower snake_case and plural. Each entity configuration calls `ToTable("order_items")`
   explicitly, because EF otherwise uses the singular entity name.

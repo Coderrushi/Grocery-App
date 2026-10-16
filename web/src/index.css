@@ -31,6 +31,9 @@
   --color-ink-muted: #5b665f;
   --color-line: #e3e7e4;
 
+  /* Chart marks (single-series bars). Validated for lightness and 3:1 contrast on the surface in each theme. */
+  --color-chart-bar: #22a15a;
+
   /* System fonts: zero download cost on slow mobile data, and good Devanagari coverage. */
   --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans', 'Noto Sans Devanagari', sans-serif;
 
@@ -66,8 +69,22 @@
   --color-ink: #e6ece8;
   --color-ink-muted: #9aa6a0;
   --color-line: #2a332e;
+  --color-chart-bar: #25a058;
 
   --shadow-card: 0 1px 2px rgb(0 0 0 / 0.4), 0 1px 3px rgb(0 0 0 / 0.5);
+}
+
+/* Paper is white: printing (packing slips, reports) always uses the light colours, whatever the theme. */
+@media print {
+  :root[data-theme='dark'] {
+    --color-brand-700: #126b34;
+    --color-danger-700: #b91c1c;
+    --color-surface: #ffffff;
+    --color-canvas: #ffffff;
+    --color-ink: #1c2420;
+    --color-ink-muted: #5b665f;
+    --color-line: #e3e7e4;
+  }
 }
 
 /* Lets components use dark: utilities if a one-off tweak is ever needed. */

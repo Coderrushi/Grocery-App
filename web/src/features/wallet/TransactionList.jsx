@@ -3,14 +3,7 @@ import { ErrorAlert } from '../../shared/ui/Alert'
 import { Spinner } from '../../shared/ui/Spinner'
 import { formatCurrency, formatDateTime } from '../../shared/utils/format'
 import { useWalletTransactions } from './walletApi'
-
-const TYPE_LABELS = {
-  TopUp: { label: 'Money added', icon: '➕' },
-  OrderPayment: { label: 'Order payment', icon: '🛍️' },
-  OrderRefund: { label: 'Order refund', icon: '↩️' },
-  AdminCredit: { label: 'Credit from store', icon: '🎁' },
-  AdminDebit: { label: 'Adjustment by store', icon: '➖' },
-}
+import { TYPE_LABELS } from './transactionTypes'
 
 /** The wallet ledger, newest first. Pass `userId` when an admin is viewing a customer's wallet. */
 export function TransactionList({ userId }) {

@@ -401,4 +401,43 @@ public sealed class OrderTests(GroceryApiFactory factory)
         var mine = await shopper.Client.GetFromJsonAsync<PagedResult<OrderSummaryResponse>>("/api/orders", _ct);
         Assert.Equal(product.Name, Assert.Single(mine!.Items).ItemsPreview);
     }
+
+    // ---------- Bulk status ----------
+
+    [Fact]
+    public async Task Admin_confirms_several_orders_at_once_and_is_told_which_could_not_move()
+    {
+        using var admin = await factory.SignedInAdminAsync(_ct);
+        var product = await ProductAsync(admin);
+        var first = await PlaceOkAsync(await ShopperAsync(product.Id, quantity: 1));
+        var cancelledShopper = await ShopperAsync(product.Id, quantity: 1);
+        var cancelled = await PlaceOkAsync(cancelledShopper);
+        await cancelledShopper.Client.PostAsJsonAsync($"/api/orders/{cancelled.Id}/cancel", new CancelOrderRequest(null), _ct);
+
+        var response = await admin.PostAsJsonAsync("/api/admin/orders/bulk-status",
+            new BulkOrderStatusRequest([cancelled.Id, first.Id, 999_999_999], OrderStatus.Confirmed), _ct);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var result = (await response.Content.ReadFromJsonAsync<BulkOrderStatusResponse>(_ct))!;
+        Assert.Equal([first.Id], result.Updated);
+        Assert.Equal([cancelled.Id, 999_999_999], result.Failed.Select(f => f.OrderId));
+        Assert.Contains("Cancelled", result.Failed[0].Reason, StringComparison.Ordinal);
+        Assert.Equal("Order not found.", result.Failed[1].Reason);
+
+        var confirmed = await admin.GetFromJsonAsync<AdminOrderDetailResponse>($"/api/admin/orders/{first.Id}", _ct);
+        Assert.Equal(OrderStatus.Confirmed, confirmed!.Order.Status);
+        Assert.Equal(OrderStatus.Confirmed, confirmed.Order.Timeline[^1].ToStatus);
+    }
+
+    [Theory]
+    [InlineData(OrderStatus.Cancelled)]
+    [InlineData(OrderStatus.Placed)]
+    public async Task Bulk_changes_only_move_orders_forward(OrderStatus status)
+    {
+        using var admin = await factory.SignedInAdminAsync(_ct);
+
+        var response = await admin.PostAsJsonAsync("/api/admin/orders/bulk-status", new BulkOrderStatusRequest([1], status), _ct);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
 }

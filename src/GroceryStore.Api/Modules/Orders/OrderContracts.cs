@@ -109,3 +109,26 @@ internal sealed class ChangeOrderStatusRequestValidator : AbstractValidator<Chan
             .WithMessage("Give a reason for cancelling. The customer will see it.");
     }
 }
+
+/// <summary>Moves up to <see cref="MaxOrders"/> orders to the same next status (never to Cancelled).</summary>
+public sealed record BulkOrderStatusRequest(IReadOnlyList<int> OrderIds, OrderStatus Status)
+{
+    public const int MaxOrders = 50;
+}
+
+internal sealed class BulkOrderStatusRequestValidator : AbstractValidator<BulkOrderStatusRequest>
+{
+    public BulkOrderStatusRequestValidator()
+    {
+        RuleFor(r => r.OrderIds).NotEmpty().WithMessage("Select at least one order.")
+            .Must(ids => ids is null || ids.Count <= BulkOrderStatusRequest.MaxOrders)
+            .WithMessage($"Select at most {BulkOrderStatusRequest.MaxOrders} orders at a time.");
+        RuleFor(r => r.Status).IsInEnum()
+            .Must(s => s is not (OrderStatus.Placed or OrderStatus.Cancelled))
+            .WithMessage("Orders can be moved forward together, but cancelled only one at a time (each needs a reason).");
+    }
+}
+
+public sealed record BulkOrderFailure(int OrderId, string OrderNumber, string Reason);
+
+public sealed record BulkOrderStatusResponse(IReadOnlyList<int> Updated, IReadOnlyList<BulkOrderFailure> Failed);

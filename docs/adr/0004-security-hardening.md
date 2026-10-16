@@ -30,7 +30,7 @@ Added as the response starts, so error responses carry them too:
   `Referrer-Policy: strict-origin-when-cross-origin`, a restrictive `Permissions-Policy` and
   `Cross-Origin-Opener-Policy: same-origin`.
 - **API and media responses:** `Content-Security-Policy: default-src 'none'; frame-ancestors 'none'; …`.
-  They are data, never pages. The web app's HTML gets its own policy in Phase 9.
+  They are data, never pages. The web app's HTML gets its own policy (ADR 0005).
 - **`Cache-Control: no-store`** on `/api` responses, unless an endpoint sets its own caching. Orders,
   wallets and addresses must never sit in a shared cache.
 - HSTS and the HTTPS redirect (outside Development) are unchanged.
@@ -103,4 +103,4 @@ Invalid configuration stops the app with a clear message instead of starting hal
   - a Staff role (declined for now; policies make it cheap later)
   - distributed rate limiting
   - key encryption at rest
-  - a Content-Security-Policy for the SPA's HTML (Phase 9)
+  - a Content-Security-Policy for the SPA's HTML (done in Phase 9, ADR 0005)

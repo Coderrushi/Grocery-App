@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Text.Json.Serialization;
 using GroceryStore.Api.Common;
 using GroceryStore.Api.Common.Errors;
+using GroceryStore.Api.Common.Hosting;
 using GroceryStore.Api.Common.Media;
 using GroceryStore.Api.Common.Security;
 using GroceryStore.Api.Common.Validation;
@@ -64,9 +65,10 @@ builder.Services.AddMedia(builder.Configuration, builder.Environment);
 // ---------- HTTP pipeline ----------
 
 var app = builder.Build();
+var spa = SpaHosting.Find(app); // the built React app in production; null in development (Vite serves it)
 
 app.UseForwardedHeaders(); // first: everything after sees the real client IP and https scheme
-app.UseSecurityHeaders();
+app.UseSecurityHeaders(spa?.ContentSecurityPolicy);
 app.UseExceptionHandler();
 app.UseStatusCodePages(); // Gives bare 401/403/404/429 responses a ProblemDetails body too.
 
@@ -82,14 +84,18 @@ else
 }
 
 app.UseMedia(); // uploaded product images under /media (public, before auth)
+if (spa is not null)
+{
+    app.UseSpa(spa); // the web app's files, and index.html for every other non-API path
+}
 
 app.UseAuthentication();
 app.UseRateLimiter(); // after authentication (per-user limits), before authorization (floods are counted too)
-// Nothing matched (unknown route, missing media file): answer 404 here. Otherwise the deny-by-default
-// fallback policy would turn every unknown URL into 401 for visitors.
+// Nothing matched (unknown route, missing media file, unknown /api URL): answer 404 here. Otherwise the
+// deny-by-default fallback policy would turn every unknown URL into 401 for visitors.
 app.Use((context, next) =>
 {
-    if (context.GetEndpoint() is null)
+    if (SpaHosting.IsUnmatched(context))
     {
         context.Response.StatusCode = StatusCodes.Status404NotFound;
         return Task.CompletedTask;
@@ -109,6 +115,7 @@ app.MapHealthChecks("/api/health/live", live).AllowAnonymous();
 app.MapHealthChecks("/api/health/ready", ready).AllowAnonymous();
 app.MapHealthChecks("/api/health", ready).AllowAnonymous();
 
+await app.MigrateDatabaseIfEnabledAsync();
 await app.SeedAdminAsync();
 await app.SeedDemoCatalogAsync();
 await app.RunAsync();

@@ -57,3 +57,39 @@ jobs:
       - run: npm run format:check
       - run: npm test
       - run: npm run build
+
+  container:
+    name: Container image (build + smoke test)
+    runs-on: ubuntu-latest
+    # The same image Render builds. Nobody needs Docker locally: a broken Dockerfile fails here, not on deploy.
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: ci-root-password
+          MYSQL_DATABASE: grocery_smoke
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd "mysqladmin ping -h 127.0.0.1 -pci-root-password"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+    steps:
+      - uses: actions/checkout@v5
+      - run: docker build -t quickkirana:ci .
+      - name: Start the image against MySQL (migrations on start-up, like Render)
+        run: |
+          docker run -d --name app --network host \
+            -e ConnectionStrings__GroceryDb="Server=127.0.0.1;Port=3306;Database=grocery_smoke;User=root;Password=ci-root-password;SslMode=Disabled" \
+            -e Database__MigrateOnStartup=true \
+            -e SeedDemoCatalog=true \
+            quickkirana:ci
+          for i in $(seq 1 60); do curl -fs http://127.0.0.1:8080/api/health/ready && break; sleep 2; done
+      - name: Smoke test
+        run: |
+          set -e
+          curl -fs http://127.0.0.1:8080/api/health/ready
+          curl -fs http://127.0.0.1:8080/api/catalog/categories | grep -q '"slug"'
+          curl -fsI http://127.0.0.1:8080/ | grep -qi 'content-security-policy:.*sha256-'
+          curl -fs http://127.0.0.1:8080/account/orders | grep -q 'id="root"'
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8080/api/nope)" = 404
+      - if: failure()
+        run: docker logs app

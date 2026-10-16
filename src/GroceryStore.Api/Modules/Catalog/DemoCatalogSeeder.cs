@@ -5,8 +5,9 @@ namespace GroceryStore.Api.Modules.Catalog;
 
 /// <summary>
 /// Fills an EMPTY catalogue with sample groceries so the storefront can be demonstrated and tested by
-/// hand. Runs only when "SeedDemoCatalog" is true (appsettings.Development.json), never in production,
-/// so demo items can never mix with the shop's real products.
+/// hand. Runs only when "SeedDemoCatalog" is true: on in appsettings.Development.json, and on a demo
+/// deployment if render.yaml turns it on. It only ever fills an empty catalogue, so demo items can
+/// never mix with a shop's real products.
 /// </summary>
 internal static class DemoCatalogSeeder
 {

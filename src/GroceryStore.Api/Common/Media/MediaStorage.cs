@@ -5,8 +5,14 @@ public sealed class MediaOptions
     public const string SectionName = "Media";
     public const string RequestPath = "/media";
 
-    /// <summary>Folder for uploaded files. Relative paths are resolved against the app's content root.</summary>
+    /// <summary>"Local" (files on disk, served under /media) or "Cloudinary" (production on an ephemeral disk).</summary>
+    public string Provider { get; set; } = "Local";
+
+    /// <summary>Local provider: folder for uploaded files. Relative paths are resolved against the app's content root.</summary>
     public string RootPath { get; set; } = "media";
+
+    /// <summary>Cloudinary provider: "cloudinary://API_KEY:API_SECRET@CLOUD_NAME" (a secret: environment variable only).</summary>
+    public string? CloudinaryUrl { get; set; }
 }
 
 /// <summary>

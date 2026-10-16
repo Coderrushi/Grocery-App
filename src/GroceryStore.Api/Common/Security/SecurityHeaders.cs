@@ -11,7 +11,8 @@ internal static class SecurityHeaders
 {
     public const string ApiContentSecurityPolicy = "default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'";
 
-    public static IApplicationBuilder UseSecurityHeaders(this IApplicationBuilder app) =>
+    /// <param name="pagePolicy">The Content-Security-Policy for the web app's HTML pages, when the API serves them.</param>
+    public static IApplicationBuilder UseSecurityHeaders(this IApplicationBuilder app, string? pagePolicy = null) =>
         app.Use((context, next) =>
         {
             context.Response.OnStarting(() =>
@@ -27,6 +28,10 @@ internal static class SecurityHeaders
                 if (path.StartsWithSegments("/api") || path.StartsWithSegments("/media"))
                 {
                     headers.ContentSecurityPolicy = ApiContentSecurityPolicy;
+                }
+                else if (pagePolicy is not null && context.Response.ContentType?.StartsWith("text/html", StringComparison.OrdinalIgnoreCase) == true)
+                {
+                    headers.ContentSecurityPolicy = pagePolicy;
                 }
 
                 // Personal data (orders, wallet, addresses) must never sit in a shared or proxy cache.

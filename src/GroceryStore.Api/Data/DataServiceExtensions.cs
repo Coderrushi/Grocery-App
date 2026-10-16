@@ -1,6 +1,26 @@
 using Microsoft.EntityFrameworkCore;
+using MySql.Data.MySqlClient;
 
 namespace GroceryStore.Api.Data;
+
+/// <summary>Database settings beyond the connection string ("Database" in appsettings).</summary>
+public sealed class DatabaseOptions
+{
+    public const string SectionName = "Database";
+
+    /// <summary>
+    /// Apply pending EF migrations when the app starts. For a single instance without a pre-deploy step
+    /// (Render's free plan). EF Core takes a database lock while migrating, so a concurrent start waits.
+    /// </summary>
+    public bool MigrateOnStartup { get; set; }
+
+    /// <summary>
+    /// The database server's CA certificate (PEM text, e.g. Aiven's ca.pem). When set, the connection
+    /// verifies the server certificate (SslMode=VerifyCA) instead of only encrypting, which stops a
+    /// man-in-the-middle on the public internet.
+    /// </summary>
+    public string? CaCertificatePem { get; set; }
+}
 
 internal static class DataServiceExtensions
 {
@@ -17,8 +37,12 @@ internal static class DataServiceExtensions
                 "in src/GroceryStore.Api; in production, use the ConnectionStrings__GroceryDb environment variable.");
         }
 
-        services.AddDbContext<AppDbContext>(options =>
-            options.UseMySQL(connectionString, mysql =>
+        var options = configuration.GetSection(DatabaseOptions.SectionName).Get<DatabaseOptions>() ?? new DatabaseOptions();
+        services.AddSingleton(options);
+        connectionString = WithVerifiedTls(connectionString, options.CaCertificatePem);
+
+        services.AddDbContext<AppDbContext>(db =>
+            db.UseMySQL(connectionString, mysql =>
             {
                 // Retries transient failures. Consequence: code that opens its own transaction must run
                 // inside db.Database.CreateExecutionStrategy().ExecuteAsync(...), and must rebuild its
@@ -29,5 +53,30 @@ internal static class DataServiceExtensions
             }));
 
         return services;
+    }
+
+    /// <summary>The MySQL driver reads a CA from a file, so the PEM from configuration is written to one.</summary>
+    internal static string WithVerifiedTls(string connectionString, string? caCertificatePem)
+    {
+        if (string.IsNullOrWhiteSpace(caCertificatePem))
+        {
+            return connectionString;
+        }
+
+        var caFile = Path.Combine(Path.GetTempPath(), "quickkirana-db-ca.pem");
+        File.WriteAllText(caFile, caCertificatePem.Replace("\\n", "\n", StringComparison.Ordinal)); // env vars often carry "\n"
+        return new MySqlConnectionStringBuilder(connectionString) { SslMode = MySqlSslMode.VerifyCA, SslCa = caFile }.ConnectionString;
+    }
+
+    /// <summary>Applies pending migrations when Database:MigrateOnStartup is on (before seeding, which needs the tables).</summary>
+    public static async Task MigrateDatabaseIfEnabledAsync(this WebApplication app)
+    {
+        if (!app.Services.GetRequiredService<DatabaseOptions>().MigrateOnStartup)
+        {
+            return;
+        }
+
+        await using var scope = app.Services.CreateAsyncScope();
+        await scope.ServiceProvider.GetRequiredService<AppDbContext>().Database.MigrateAsync();
     }
 }

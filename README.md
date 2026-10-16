@@ -73,6 +73,60 @@ Prerequisites: .NET SDK 10.0.2xx, Node 24, MySQL 8.x.
 | Review migration SQL | `dotnet ef migrations script --project src/GroceryStore.Api` |
 | Web tests / lint / format | `npm test`, `npm run lint`, `npm run format` (in `web/`) |
 
+## Deploying (Render + Aiven + Cloudinary)
+
+The whole shop runs free on three services. [ADR 0005](docs/adr/0005-deployment.md) explains the
+choices and the free-tier limits. You need a GitHub account and about 30 minutes. Never paste a
+password or key into a file in this repository: every secret goes into Render's dashboard.
+
+1. **Put the code on GitHub.**
+   - On github.com, create an empty **private** repository, for example `quickkirana`, without a
+     README.
+   - Then push to it:
+     ```powershell
+     git remote add origin https://github.com/<you>/quickkirana.git
+     git push -u origin main
+     ```
+   - The CI workflow runs on every push. It builds and tests the API and web app, and builds and
+     smoke-tests the Docker image.
+2. **Create the database (Aiven).**
+   - Sign up at aiven.io, then **Create service → MySQL → Free plan**.
+   - When it's running, the overview page shows **Host, Port, User (`avnadmin`), Password** and
+     **Database (`defaultdb`)**. Download the **CA certificate** too.
+   - Note the service's **cloud region**.
+   - Your connection string (keep it private):
+     `Server=<host>;Port=<port>;Database=defaultdb;User=avnadmin;Password=<password>;SslMode=Required`
+3. **Create the image store (Cloudinary).**
+   - Sign up at cloudinary.com.
+   - On the dashboard, copy the **API environment variable**: `cloudinary://<key>:<secret>@<cloud>`.
+4. **Pick the region.** In `render.yaml`, set `region` to the Render region closest to the Aiven
+   region (`singapore`, `frankfurt`, `oregon`, `ohio` or `virginia`). Commit and push.
+5. **Create the service (Render).**
+   - Sign up at render.com with GitHub, then **New → Blueprint** and pick the repository.
+   - Render reads `render.yaml` and asks for the secrets:
+
+     | Setting | Value |
+     |---|---|
+     | `ConnectionStrings__GroceryDb` | the connection string from step 2 |
+     | `Database__CaCertificatePem` | the whole text of Aiven's `ca.pem`, `-----BEGIN…` to `…END CERTIFICATE-----` |
+     | `Media__CloudinaryUrl` | the `cloudinary://…` value from step 3 |
+     | `AdminSeed__Email` and `AdminSeed__Password` | the shopkeeper's sign-in; password at least 12 characters |
+6. **Deploy.**
+   - Render builds the image (5–10 minutes the first time). On start-up the app creates the tables,
+     the admin account and, with `SeedDemoCatalog=true`, about 40 demo groceries.
+   - When the health check passes, open `https://<service>.onrender.com` and sign in as the admin.
+7. **After the first start:**
+   - You may delete `AdminSeed__Password` in Render. The account exists, and the seeder never
+     changes an existing password.
+   - For a real shop, set `SeedDemoCatalog` to `false` before adding real products.
+
+**Updating:** push to `main`. CI runs, and Render redeploys automatically. Migrations apply on
+start-up.
+
+**If something fails:** check Render's **Logs** tab. The app refuses to start with a clear message
+when a setting is missing or invalid, for example a short admin password or a bad Cloudinary URL.
+`/api/health/live` shows the process is up. `/api/health/ready` also checks the database.
+
 ## Conventions
 
 - **Errors:** every API error is RFC 7807 ProblemDetails with a `traceId`. Services throw
@@ -107,7 +161,8 @@ Prerequisites: .NET SDK 10.0.2xx, Node 24, MySQL 8.x.
   and reload. Update contended rows (stock) before inserting rows that reference them
   ([ADR 0001](docs/adr/0001-mysql-ef-core-provider.md), quirks 5–6). Delivery coverage is
   `DeliveryArea:ServiceablePincodes` (empty = everywhere).
-- **Media:** go through `IMediaStorage`. Validate uploads by content (`ImageFile.DetectExtension`),
+- **Media:** go through `IMediaStorage` (local `/media` folder in development, Cloudinary in
+  production). Validate uploads by content (`ImageFile.DetectExtension`),
   never by file name.
 - **Reports:** `ReportService` computes everything live with GROUP BY queries. "Sales" means orders
   placed in the period, minus cancelled ones, counted on their IST day (`ShopTime`). Periods are

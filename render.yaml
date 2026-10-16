@@ -1,0 +1,38 @@
+# Render Blueprint: Render creates the service from this file (New > Blueprint > pick this repo).
+# Secrets are marked `sync: false`: Render asks for them once in its dashboard; they never live in git.
+# Full walkthrough: README.md > "Deploying (Render + Aiven + Cloudinary)". Decisions: docs/adr/0005-deployment.md.
+services:
+  - type: web
+    name: quickkirana
+    runtime: docker
+    plan: free
+    # Pick the region closest to your Aiven database (shown on its Aiven overview page).
+    region: singapore
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/health/ready
+    autoDeploy: true
+    envVars:
+      - key: PORT # Render routes traffic to this port; the image listens on 8080
+        value: "8080"
+      # The container is reachable only through Render's proxy, so its X-Forwarded-For is trustworthy.
+      - key: ForwardedHeaders__TrustAllProxies
+        value: "true"
+      # One free instance and no pre-deploy hook: apply EF migrations at start-up.
+      - key: Database__MigrateOnStartup
+        value: "true"
+      - key: Media__Provider
+        value: Cloudinary
+      # Fill the shop with ~40 demo groceries when the catalogue is empty. Set to "false" for a real shop.
+      - key: SeedDemoCatalog
+        value: "true"
+      # ----- Secrets: entered in the Render dashboard -----
+      - key: ConnectionStrings__GroceryDb # Server=...;Port=...;Database=defaultdb;User=avnadmin;Password=...;SslMode=Required
+        sync: false
+      - key: Database__CaCertificatePem # Aiven's ca.pem contents: turns on certificate verification
+        sync: false
+      - key: Media__CloudinaryUrl # cloudinary://API_KEY:API_SECRET@CLOUD_NAME
+        sync: false
+      - key: AdminSeed__Email
+        sync: false
+      - key: AdminSeed__Password # at least 12 characters (checked at start-up)
+        sync: false

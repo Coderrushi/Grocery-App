@@ -9,7 +9,7 @@ namespace GroceryStore.Api.Modules.Customers;
 /// <summary>Shopkeeper view of registered customers.</summary>
 [ApiController]
 [Route("api/admin/customers")]
-[Authorize(Roles = Roles.Admin)]
+[Authorize(Policy = Policies.ManageStore)]
 [Produces("application/json")]
 public sealed class AdminCustomersController(AppDbContext db) : ControllerBase
 {

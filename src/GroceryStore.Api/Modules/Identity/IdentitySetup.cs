@@ -1,12 +1,11 @@
-using System.Threading.RateLimiting;
 using GroceryStore.Api.Data;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 
 namespace GroceryStore.Api.Modules.Identity;
 
 internal static class IdentitySetup
 {
-    public const string AuthRateLimitPolicy = "auth";
     public const string AuthCookieName = "qk_auth";
 
     public static IServiceCollection AddAppIdentity(
@@ -62,25 +61,18 @@ internal static class IdentitySetup
             };
         });
 
-        services.AddAuthorization();
+        // Deny by default: an endpoint without [AllowAnonymous] requires a signed-in user, so forgetting an
+        // attribute fails closed. Back-office endpoints additionally require the ManageStore policy.
+        services.AddAuthorizationBuilder()
+            .SetFallbackPolicy(new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build())
+            .AddPolicy(Policies.ManageStore, policy => policy.RequireRole(Roles.Admin));
 
-        // Lockout protects one account; this limits password-guessing across many accounts from one client.
-        var permitLimit = configuration.GetValue("RateLimiting:AuthPermitLimitPerMinute", 10);
-        services.AddRateLimiter(options =>
-        {
-            options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
-            options.AddPolicy(AuthRateLimitPolicy, httpContext =>
-                RateLimitPartition.GetFixedWindowLimiter(
-                    httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
-                    _ => new FixedWindowRateLimiterOptions
-                    {
-                        PermitLimit = permitLimit,
-                        Window = TimeSpan.FromMinutes(1),
-                        QueueLimit = 0,
-                    }));
-        });
-
-        services.Configure<AdminSeedOptions>(configuration.GetSection(AdminSeedOptions.SectionName));
+        services.AddOptions<AdminSeedOptions>()
+            .BindConfiguration(AdminSeedOptions.SectionName)
+            // A production admin password is the key to every customer's data and wallet.
+            .Validate(o => !environment.IsProduction() || o.Password is null || o.Password.Length >= AdminSeedOptions.MinProductionPasswordLength,
+                $"AdminSeed:Password must be at least {AdminSeedOptions.MinProductionPasswordLength} characters in production.")
+            .ValidateOnStart();
         services.AddScoped<AuthService>();
         services.AddScoped<AccountService>();
 

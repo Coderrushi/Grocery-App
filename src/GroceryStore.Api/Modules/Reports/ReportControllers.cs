@@ -1,13 +1,15 @@
 using GroceryStore.Api.Common;
+using GroceryStore.Api.Common.Security;
 using GroceryStore.Api.Modules.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace GroceryStore.Api.Modules.Reports;
 
 [ApiController]
 [Route("api/admin/dashboard")]
-[Authorize(Roles = Roles.Admin)]
+[Authorize(Policy = Policies.ManageStore)]
 [Produces("application/json")]
 public sealed class AdminDashboardController(ReportService reports) : ControllerBase
 {
@@ -22,7 +24,8 @@ public sealed class AdminDashboardController(ReportService reports) : Controller
 /// </summary>
 [ApiController]
 [Route("api/admin/reports")]
-[Authorize(Roles = Roles.Admin)]
+[EnableRateLimiting(RateLimits.Reports)]
+[Authorize(Policy = Policies.ManageStore)]
 public sealed class AdminReportsController(ReportService reports) : ControllerBase
 {
     [HttpGet("sales")]

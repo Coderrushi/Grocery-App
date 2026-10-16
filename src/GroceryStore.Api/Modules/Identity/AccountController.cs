@@ -1,6 +1,7 @@
 using GroceryStore.Api.Common.Security;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace GroceryStore.Api.Modules.Identity;
 
@@ -18,6 +19,7 @@ public sealed class AccountController(AccountService account) : ControllerBase
         account.UpdateProfileAsync(User.GetUserId(), request, ct);
 
     [HttpPost("change-password")]
+    [EnableRateLimiting(RateLimits.Sensitive)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> ChangePassword(ChangePasswordRequest request)

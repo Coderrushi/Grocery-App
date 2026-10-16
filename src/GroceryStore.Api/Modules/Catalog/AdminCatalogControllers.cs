@@ -9,7 +9,7 @@ namespace GroceryStore.Api.Modules.Catalog;
 
 [ApiController]
 [Route("api/admin/categories")]
-[Authorize(Roles = Roles.Admin)]
+[Authorize(Policy = Policies.ManageStore)]
 [Produces("application/json")]
 public sealed class AdminCategoriesController(AdminCategoryService categories) : ControllerBase
 {
@@ -41,7 +41,7 @@ public sealed class AdminCategoriesController(AdminCategoryService categories) :
 
 [ApiController]
 [Route("api/admin/products")]
-[Authorize(Roles = Roles.Admin)]
+[Authorize(Policy = Policies.ManageStore)]
 [Produces("application/json")]
 public sealed class AdminProductsController(AdminProductService products, InventoryService inventory) : ControllerBase
 {

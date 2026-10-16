@@ -5,6 +5,7 @@ using GroceryStore.Api.Data;
 using GroceryStore.Api.Modules.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
@@ -32,6 +33,7 @@ public sealed class WalletController(WalletService wallet, TopUpService topUps, 
     /// request with the same key returns the original result and never charges twice.
     /// </summary>
     [HttpPost("top-ups")]
+    [EnableRateLimiting(RateLimits.Sensitive)]
     [ProducesResponseType<TopUpResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status422UnprocessableEntity)]
@@ -41,7 +43,7 @@ public sealed class WalletController(WalletService wallet, TopUpService topUps, 
 
 [ApiController]
 [Route("api/admin/customers/{userId:int}/wallet")]
-[Authorize(Roles = Roles.Admin)]
+[Authorize(Policy = Policies.ManageStore)]
 [Produces("application/json")]
 public sealed class AdminWalletController(AppDbContext db, WalletService wallet) : ControllerBase
 {
@@ -62,6 +64,7 @@ public sealed class AdminWalletController(AppDbContext db, WalletService wallet)
 
     /// <summary>Manually credits or debits a wallet. The reason and note are recorded with the admin's name.</summary>
     [HttpPost("adjustments")]
+    [EnableRateLimiting(RateLimits.Sensitive)]
     [ProducesResponseType<AdminWalletResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status422UnprocessableEntity)]
     public async Task<AdminWalletResponse> Adjust(int userId, AdminWalletAdjustmentRequest request, CancellationToken ct)

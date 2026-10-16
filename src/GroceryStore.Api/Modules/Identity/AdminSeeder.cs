@@ -12,6 +12,7 @@ namespace GroceryStore.Api.Modules.Identity;
 public sealed class AdminSeedOptions
 {
     public const string SectionName = "AdminSeed";
+    public const int MinProductionPasswordLength = 12;
 
     public string? Email { get; init; }
     public string? Password { get; init; }

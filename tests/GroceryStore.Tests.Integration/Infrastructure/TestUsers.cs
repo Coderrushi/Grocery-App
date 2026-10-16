@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using GroceryStore.Api.Modules.Identity;
+using Microsoft.AspNetCore.Mvc.Testing;
 
 namespace GroceryStore.Tests.Integration.Infrastructure;
 
@@ -23,7 +24,7 @@ internal static class TestUsers
 
     /// <summary>Registers a new customer and returns a client carrying their auth cookie.</summary>
     public static async Task<(HttpClient Client, RegisterRequest Customer)> SignedInCustomerAsync(
-        this GroceryApiFactory factory, CancellationToken ct)
+        this WebApplicationFactory<Program> factory, CancellationToken ct)
     {
         var customer = NewCustomer();
         var client = factory.CreateClient();
@@ -32,7 +33,7 @@ internal static class TestUsers
         return (client, customer);
     }
 
-    public static async Task<HttpClient> SignedInAdminAsync(this GroceryApiFactory factory, CancellationToken ct)
+    public static async Task<HttpClient> SignedInAdminAsync(this WebApplicationFactory<Program> factory, CancellationToken ct)
     {
         var client = factory.CreateClient();
         var response = await client.PostAsJsonAsync(

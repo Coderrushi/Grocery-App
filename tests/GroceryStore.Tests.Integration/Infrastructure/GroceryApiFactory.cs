@@ -30,8 +30,11 @@ public sealed class GroceryApiFactory : WebApplicationFactory<Program>, IAsyncLi
         builder.UseSetting("AdminSeed:Email", AdminEmail);
         builder.UseSetting("AdminSeed:Password", AdminPassword);
         builder.UseSetting("AdminSeed:FullName", "Test Admin");
-        // Every test client shares one "IP"; the rate limit itself is tested with a dedicated host.
+        // Every test client shares one "IP"; the limits themselves are tested with dedicated hosts.
+        builder.UseSetting("RateLimiting:GlobalPermitLimitPerMinute", "1000000");
         builder.UseSetting("RateLimiting:AuthPermitLimitPerMinute", "100000");
+        builder.UseSetting("RateLimiting:SensitivePermitLimitPerMinute", "100000");
+        builder.UseSetting("RateLimiting:ReportsPermitLimitPerMinute", "100000");
         builder.UseSetting("Media:RootPath", MediaRoot);
     }
 

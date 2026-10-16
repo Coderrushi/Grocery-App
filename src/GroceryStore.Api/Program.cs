@@ -3,6 +3,7 @@ using System.Text.Json.Serialization;
 using GroceryStore.Api.Common;
 using GroceryStore.Api.Common.Errors;
 using GroceryStore.Api.Common.Media;
+using GroceryStore.Api.Common.Security;
 using GroceryStore.Api.Common.Validation;
 using GroceryStore.Api.Data;
 using GroceryStore.Api.Modules.Cart;
@@ -45,7 +46,10 @@ builder.Services
 builder.Services.AddOpenApi();
 
 builder.Services.AddHealthChecks()
-    .AddDbContextCheck<AppDbContext>("database");
+    .AddDbContextCheck<AppDbContext>("database", tags: [ReadyTag]);
+
+builder.AddHostingSecurity(); // proxies, cookie-key storage, request size
+builder.Services.AddAppRateLimiting();
 
 // Modules
 builder.Services.AddAppIdentity(builder.Configuration, builder.Environment);
@@ -61,12 +65,14 @@ builder.Services.AddMedia(builder.Configuration, builder.Environment);
 
 var app = builder.Build();
 
+app.UseForwardedHeaders(); // first: everything after sees the real client IP and https scheme
+app.UseSecurityHeaders();
 app.UseExceptionHandler();
 app.UseStatusCodePages(); // Gives bare 401/403/404/429 responses a ProblemDetails body too.
 
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi(); // /openapi/v1.json
+    app.MapOpenApi().AllowAnonymous(); // /openapi/v1.json
     app.UseSwaggerUI(options => options.SwaggerEndpoint("/openapi/v1.json", "QuickKirana API v1"));
 }
 else
@@ -78,15 +84,37 @@ else
 app.UseMedia(); // uploaded product images under /media (public, before auth)
 
 app.UseAuthentication();
+app.UseRateLimiter(); // after authentication (per-user limits), before authorization (floods are counted too)
+// Nothing matched (unknown route, missing media file): answer 404 here. Otherwise the deny-by-default
+// fallback policy would turn every unknown URL into 401 for visitors.
+app.Use((context, next) =>
+{
+    if (context.GetEndpoint() is null)
+    {
+        context.Response.StatusCode = StatusCodes.Status404NotFound;
+        return Task.CompletedTask;
+    }
+
+    return next(context);
+});
 app.UseAuthorization();
-app.UseRateLimiter();
 
 app.MapControllers();
-app.MapHealthChecks("/api/health", new HealthCheckOptions { ResponseWriter = HealthResponseWriter.WriteAsync });
+
+// Liveness: the process answers (no dependencies; a failing database must not get the app restarted).
+// Readiness: the database is reachable, so traffic can be sent. /api/health is kept as an alias of ready.
+var live = new HealthCheckOptions { Predicate = _ => false, ResponseWriter = HealthResponseWriter.WriteAsync };
+var ready = new HealthCheckOptions { Predicate = check => check.Tags.Contains(ReadyTag), ResponseWriter = HealthResponseWriter.WriteAsync };
+app.MapHealthChecks("/api/health/live", live).AllowAnonymous();
+app.MapHealthChecks("/api/health/ready", ready).AllowAnonymous();
+app.MapHealthChecks("/api/health", ready).AllowAnonymous();
 
 await app.SeedAdminAsync();
 await app.SeedDemoCatalogAsync();
 await app.RunAsync();
 
 // Exposes the implicit Program class to WebApplicationFactory in the integration tests.
-public partial class Program;
+public partial class Program
+{
+    private const string ReadyTag = "ready";
+}

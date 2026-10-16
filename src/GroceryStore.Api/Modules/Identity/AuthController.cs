@@ -12,7 +12,8 @@ public sealed class AuthController(AuthService auth) : ControllerBase
 {
     /// <summary>Creates a customer account and signs the new customer in.</summary>
     [HttpPost("register")]
-    [EnableRateLimiting(IdentitySetup.AuthRateLimitPolicy)]
+    [AllowAnonymous]
+    [EnableRateLimiting(RateLimits.Auth)]
     [ProducesResponseType<CurrentUserResponse>(StatusCodes.Status201Created)]
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
@@ -24,12 +25,14 @@ public sealed class AuthController(AuthService auth) : ControllerBase
 
     /// <summary>Signs in with email or mobile number. Sets the HttpOnly auth cookie.</summary>
     [HttpPost("login")]
-    [EnableRateLimiting(IdentitySetup.AuthRateLimitPolicy)]
+    [AllowAnonymous]
+    [EnableRateLimiting(RateLimits.Auth)]
     [ProducesResponseType<CurrentUserResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
     public Task<CurrentUserResponse> Login(LoginRequest request, CancellationToken ct) => auth.LoginAsync(request, ct);
 
     [HttpPost("logout")]
+    [AllowAnonymous] // signing out with an expired cookie must still clear it
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> Logout()
     {
@@ -39,7 +42,6 @@ public sealed class AuthController(AuthService auth) : ControllerBase
 
     /// <summary>The signed-in user, or 401. The web app calls this on start-up to restore the session.</summary>
     [HttpGet("me")]
-    [Authorize]
     [ProducesResponseType<CurrentUserResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<CurrentUserResponse>> Me()

@@ -78,6 +78,12 @@ Prerequisites: .NET SDK 10.0.2xx, Node 24, MySQL 8.x.
 - **Errors:** every API error is RFC 7807 ProblemDetails with a `traceId`. Services throw
   `NotFoundException`, `ConflictException` or `BusinessRuleException`, and never return error codes.
 - **Validation:** FluentValidation validators next to their request DTOs run automatically.
+- **Security ([ADR 0004](docs/adr/0004-security-hardening.md)):**
+  - Every endpoint requires sign-in unless marked `[AllowAnonymous]`, and back-office controllers use
+    `[Authorize(Policy = Policies.ManageStore)]`. Making an endpoint public means adding it to the
+    allowlist in `SecurityTests`.
+  - Endpoints that move money or change accounts get `[EnableRateLimiting(RateLimits.Sensitive)]`.
+  - Health checks: `/api/health/live` (the process) and `/api/health/ready` (the database).
 - **Money:** `decimal(10,2)` in INR, inclusive of taxes. Every product has a selling `Price` and the
   printed `Mrp` (`Mrp >= Price`, enforced by a DB CHECK constraint). Format in the UI only via
   `formatCurrency`.

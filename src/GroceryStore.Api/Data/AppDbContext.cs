@@ -1,5 +1,6 @@
 using GroceryStore.Api.Data.Conventions;
 using GroceryStore.Api.Modules.Identity;
+using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,8 +11,14 @@ namespace GroceryStore.Api.Data;
 /// IEntityTypeConfiguration classes in its own folder; they are discovered automatically below.
 /// </summary>
 public class AppDbContext(DbContextOptions<AppDbContext> options)
-    : IdentityDbContext<AppUser, AppRole, int>(options)
+    : IdentityDbContext<AppUser, AppRole, int>(options), IDataProtectionKeyContext
 {
+    /// <summary>
+    /// The keys that encrypt auth cookies (table data_protection_keys). Kept in the database so a restart
+    /// or redeploy doesn't sign everyone out, and every instance can read every cookie (ADR 0004).
+    /// </summary>
+    public DbSet<DataProtectionKey> DataProtectionKeys => Set<DataProtectionKey>();
+
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
     {
         MySqlModelConventions.Apply(configurationBuilder);

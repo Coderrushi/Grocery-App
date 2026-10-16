@@ -12,4 +12,11 @@ public static class ClaimsPrincipalExtensions
             ?? throw new InvalidOperationException("No authenticated user on this request.");
         return int.Parse(value, CultureInfo.InvariantCulture);
     }
+
+    /// <summary>The user's id when signed in, otherwise null (for anonymous-friendly code such as rate limiting).</summary>
+    public static int? GetUserIdOrNull(this ClaimsPrincipal principal) =>
+        principal.Identity?.IsAuthenticated == true
+        && int.TryParse(principal.FindFirstValue(ClaimTypes.NameIdentifier), NumberStyles.None, CultureInfo.InvariantCulture, out var id)
+            ? id
+            : null;
 }

@@ -3,6 +3,7 @@ using GroceryStore.Api.Common.Security;
 using GroceryStore.Api.Modules.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace GroceryStore.Api.Modules.Orders;
 
@@ -20,6 +21,7 @@ public sealed class OrdersController(OrderService orders) : ControllerBase
     /// changed since checkout was opened, 422 if the wallet balance is too low. Safe to retry with the same key.
     /// </summary>
     [HttpPost("api/orders")]
+    [EnableRateLimiting(RateLimits.Sensitive)]
     [ProducesResponseType<OrderDetailResponse>(StatusCodes.Status201Created)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status422UnprocessableEntity)]
@@ -40,6 +42,7 @@ public sealed class OrdersController(OrderService orders) : ControllerBase
 
     /// <summary>Cancels the order while it is still "Placed". The payment is refunded to the wallet.</summary>
     [HttpPost("api/orders/{id:int}/cancel")]
+    [EnableRateLimiting(RateLimits.Sensitive)]
     [ProducesResponseType<OrderDetailResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status422UnprocessableEntity)]
     public Task<OrderDetailResponse> Cancel(int id, CancelOrderRequest request, CancellationToken ct) =>
@@ -48,7 +51,7 @@ public sealed class OrdersController(OrderService orders) : ControllerBase
 
 [ApiController]
 [Route("api/admin/orders")]
-[Authorize(Roles = Roles.Admin)]
+[Authorize(Policy = Policies.ManageStore)]
 [Produces("application/json")]
 public sealed class AdminOrdersController(AdminOrderService orders) : ControllerBase
 {
@@ -73,6 +76,7 @@ public sealed class AdminOrdersController(AdminOrderService orders) : Controller
     /// and why the others could not; a partly successful batch is still 200.
     /// </summary>
     [HttpPost("bulk-status")]
+    [EnableRateLimiting(RateLimits.Sensitive)]
     public Task<BulkOrderStatusResponse> ChangeStatusBulk(BulkOrderStatusRequest request, CancellationToken ct) =>
         orders.ChangeStatusBulkAsync(request, User.GetUserId(), ct);
 }

@@ -1,10 +1,12 @@
 using GroceryStore.Api.Common;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GroceryStore.Api.Modules.Catalog;
 
 /// <summary>Public storefront catalogue. No sign-in required.</summary>
 [ApiController]
+[AllowAnonymous]
 [Route("api/catalog")]
 [Produces("application/json")]
 public sealed class CatalogController(CatalogQueryService catalog) : ControllerBase

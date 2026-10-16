@@ -22,6 +22,17 @@
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="$(EfCoreVersion)" />
     <PackageVersion Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="$(EfCoreVersion)" />
     <PackageVersion Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="$(EfCoreVersion)" />
+    <PackageVersion Include="Microsoft.AspNetCore.DataProtection.EntityFrameworkCore" Version="$(EfCoreVersion)" />
+  </ItemGroup>
+
+  <ItemGroup Label="Security patches for transitive dependencies">
+    <!--
+      DataProtection.EntityFrameworkCore must stay on EfCoreVersion, but the 10.0.9 crypto libraries it
+      pulls in have published advisories (NU1903). Transitive pinning lifts them to the patched runtime
+      release. Remove these once EfCoreVersion moves past them.
+    -->
+    <PackageVersion Include="System.Security.Cryptography.Xml" Version="$(AspNetCoreVersion)" />
+    <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="$(AspNetCoreVersion)" />
   </ItemGroup>
 
   <ItemGroup Label="Web API">

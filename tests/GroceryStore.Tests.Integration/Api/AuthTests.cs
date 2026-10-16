@@ -143,7 +143,20 @@ public sealed class AuthTests(GroceryApiFactory factory)
         var logout = await client.PostAsync("/api/auth/logout", null, _ct);
 
         Assert.Equal(HttpStatusCode.NoContent, logout.StatusCode);
-        Assert.Equal(HttpStatusCode.Unauthorized, (await client.GetAsync("/api/auth/me", _ct)).StatusCode);
+        Assert.Equal(HttpStatusCode.NoContent, (await client.GetAsync("/api/auth/me", _ct)).StatusCode); // a visitor again
+        Assert.Equal(HttpStatusCode.Unauthorized, (await client.GetAsync("/api/orders", _ct)).StatusCode);
+    }
+
+    [Fact]
+    public async Task Asking_who_is_signed_in_is_not_an_error_for_a_visitor()
+    {
+        using var visitor = factory.CreateClient();
+
+        var response = await visitor.GetAsync("/api/auth/me", _ct);
+
+        // 204, not 401: the web app asks on every page load, and a 401 shows as a red console error.
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+        Assert.Empty(await response.Content.ReadAsByteArrayAsync(_ct));
     }
 
     [Fact]
@@ -151,7 +164,7 @@ public sealed class AuthTests(GroceryApiFactory factory)
     {
         using var client = factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
 
-        var response = await client.GetAsync("/api/auth/me", _ct);
+        var response = await client.GetAsync("/api/orders", _ct);
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
         Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);

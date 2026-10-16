@@ -40,13 +40,23 @@ public sealed class AuthController(AuthService auth) : ControllerBase
         return NoContent();
     }
 
-    /// <summary>The signed-in user, or 401. The web app calls this on start-up to restore the session.</summary>
+    /// <summary>
+    /// The signed-in user, or 204 No Content for a visitor. The web app asks this on every start-up to
+    /// restore the session; "nobody is signed in" is a normal answer, not an error, so it isn't a 401
+    /// (which browsers log in red in the console on every page load).
+    /// </summary>
     [HttpGet("me")]
+    [AllowAnonymous]
     [ProducesResponseType<CurrentUserResponse>(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<ActionResult<CurrentUserResponse>> Me()
     {
-        var user = await auth.GetCurrentUserAsync(User.GetUserId());
-        return user is null ? Unauthorized() : user;
+        if (User.GetUserIdOrNull() is not { } userId)
+        {
+            return NoContent();
+        }
+
+        // A valid cookie for an account that no longer exists also means "not signed in".
+        return await auth.GetCurrentUserAsync(userId) is { } user ? user : NoContent();
     }
 }

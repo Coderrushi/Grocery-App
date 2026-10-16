@@ -6,6 +6,7 @@ using GroceryStore.Api.Modules.Identity;
 using GroceryStore.Api.Modules.Wallet;
 using GroceryStore.Tests.Integration.Infrastructure;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization.Infrastructure;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -46,6 +47,7 @@ public sealed class SecurityTests(GroceryApiFactory factory)
                 "* /api/health", // health checks answer any method
                 "* /api/health/live",
                 "* /api/health/ready",
+                "GET /api/auth/me", // answers 204 for visitors
                 "GET /api/catalog/categories",
                 "GET /api/catalog/products",
                 "GET /api/catalog/products/{id:int}",
@@ -71,15 +73,13 @@ public sealed class SecurityTests(GroceryApiFactory factory)
     }
 
     [Fact]
-    public async Task Endpoints_without_an_attribute_are_still_closed_to_visitors()
+    public async Task Endpoints_without_an_attribute_are_closed_to_visitors()
     {
-        using var anonymous = factory.CreateClient();
+        // The fallback policy is what protects an endpoint someone forgot to annotate.
+        var fallback = await factory.Services.GetRequiredService<IAuthorizationPolicyProvider>().GetFallbackPolicyAsync();
 
-        // /api/auth/me carries no [Authorize] of its own: the fallback policy protects it.
-        var response = await anonymous.GetAsync("/api/auth/me", _ct);
-
-        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
-        Assert.Equal("application/problem+json", response.Content.Headers.ContentType!.MediaType);
+        Assert.NotNull(fallback);
+        Assert.Contains(fallback.Requirements, r => r is DenyAnonymousAuthorizationRequirement);
     }
 
     // ---------- Headers ----------

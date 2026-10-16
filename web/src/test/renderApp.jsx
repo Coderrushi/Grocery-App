@@ -31,7 +31,8 @@ export function mockApi(handlers) {
   return calls
 }
 
-export const anonymous = { 'GET /auth/me': () => [401, { title: 'Unauthorized', status: 401 }] }
+// A visitor: the API answers 204 No Content (no body) when nobody is signed in.
+export const anonymous = { 'GET /auth/me': () => [204, undefined] }
 
 export const customer = {
   id: 7,

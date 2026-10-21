@@ -29,6 +29,9 @@ FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 WORKDIR /app
 COPY --from=api /app ./
 COPY --from=web /web/dist ./wwwroot
+# The only folder the app writes to: product photos when Media:Provider is Local (the default).
+# On Render photos go to Cloudinary instead, because a container's disk is wiped on every restart.
+RUN mkdir -p /app/media && chown "$APP_UID" /app/media
 ENV ASPNETCORE_ENVIRONMENT=Production \
     ASPNETCORE_HTTP_PORTS=8080 \
     DOTNET_gcServer=0

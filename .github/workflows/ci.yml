@@ -94,4 +94,5 @@ jobs:
           test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8080/api/nope)" = 404
       - name: App logs (when the container started)
         if: failure()
-        run: docker logs app 2>/dev/null || echo "No container was started: see the build step above for the error."
+        run: |
+          docker logs app 2>/dev/null || echo "No container was started: see the build step above for the error."

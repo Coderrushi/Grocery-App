@@ -16,7 +16,9 @@ RUN npm run build
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS api
 WORKDIR /src
 # Project files first, so the NuGet restore layer is cached until dependencies change.
-COPY global.json Directory.Build.props Directory.Packages.props ./
+# .editorconfig belongs with them: it marks EF migrations as generated code, and without it the
+# analyzers (warnings are errors) fail the publish on them.
+COPY global.json Directory.Build.props Directory.Packages.props .editorconfig ./
 COPY src/GroceryStore.Api/GroceryStore.Api.csproj src/GroceryStore.Api/
 RUN dotnet restore src/GroceryStore.Api/GroceryStore.Api.csproj
 COPY src/ src/

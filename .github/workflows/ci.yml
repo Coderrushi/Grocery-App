@@ -74,7 +74,8 @@ jobs:
           --health-interval 5s --health-timeout 5s --health-retries 20
     steps:
       - uses: actions/checkout@v5
-      - run: docker build -t quickkirana:ci .
+      # plain progress: the full compiler/npm output is in the log, not just "exit code 1"
+      - run: docker build --progress=plain -t quickkirana:ci .
       - name: Start the image against MySQL (migrations on start-up, like Render)
         run: |
           docker run -d --name app --network host \
@@ -91,5 +92,6 @@ jobs:
           curl -fsI http://127.0.0.1:8080/ | grep -qi 'content-security-policy:.*sha256-'
           curl -fs http://127.0.0.1:8080/account/orders | grep -q 'id="root"'
           test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8080/api/nope)" = 404
-      - if: failure()
-        run: docker logs app
+      - name: App logs (when the container started)
+        if: failure()
+        run: docker logs app 2>/dev/null || echo "No container was started: see the build step above for the error."
